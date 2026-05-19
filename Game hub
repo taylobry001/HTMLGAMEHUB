@@ -142,6 +142,26 @@ header h1{
     padding:15px 20px;
     background:rgba(15,15,15,.7);
     backdrop-filter:blur(12px);
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.search-area{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(0,0,0,.4);
+    padding:5px 15px;
+    border-radius:30px;
+}
+
+.search-area input{
+    background:transparent;
+    border:none;
+    color:white;
+    padding:8px;
+    width:200px;
+    outline:none;
 }
 
 .gear{
@@ -243,6 +263,10 @@ header h1{
 
 .purple{
     background:#8844ff;
+}
+
+.orange{
+    background:#ff8800;
 }
 
 /* LOGIN */
@@ -355,6 +379,21 @@ header h1{
     cursor:pointer;
 }
 
+.editBtn{
+    background:#ff8800;
+}
+
+.file-label{
+    display:inline-block;
+    background:#3a3a3a;
+    padding:8px 12px;
+    border-radius:8px;
+    margin-top:8px;
+    cursor:pointer;
+    text-align:center;
+    font-size:12px;
+}
+
 iframe{
     width:100%;
     height:700px;
@@ -400,6 +439,11 @@ iframe{
 </header>
 
 <div class="topbar">
+
+    <div class="search-area">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search games..." onkeyup="filterGames()">
+    </div>
 
     <div>
         Total Plays:
@@ -458,6 +502,11 @@ iframe{
     id="image"
     placeholder="Image URL">
 
+    <div>
+        <label class="file-label" onclick="document.getElementById('imageFileInput').click()">📁 Upload Image File</label>
+        <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="uploadImageFile()">
+    </div>
+
     <textarea
     id="desc"
     rows="3"
@@ -467,6 +516,11 @@ iframe{
     id="code"
     rows="8"
     placeholder="FULL HTML GAME"></textarea>
+
+    <div>
+        <label class="file-label" onclick="document.getElementById('htmlFileInput').click()">📄 Upload HTML File</label>
+        <input type="file" id="htmlFileInput" accept=".html" style="display:none" onchange="uploadHTMLFile()">
+    </div>
 
     <button
     class="addBtn"
@@ -621,6 +675,22 @@ document.getElementById(
     "totalViews"
 ).innerText = totalViews;
 
+/* CROSS-TAB SYNC */
+window.addEventListener('storage', function(e) {
+    if(e.key === 'games') {
+        games = JSON.parse(e.newValue) || [];
+        render();
+        filterGames();
+    }
+    if(e.key === 'totalViews') {
+        totalViews = e.newValue || 0;
+        document.getElementById("totalViews").innerText = totalViews;
+    }
+    if(e.key === 'admins') {
+        adminPasswords = JSON.parse(e.newValue) || ["1234"];
+    }
+});
+
 /* SAVE */
 
 function save(){
@@ -629,6 +699,82 @@ function save(){
         "games",
         JSON.stringify(games)
     );
+}
+
+/* FILE UPLOADS */
+
+function uploadImageFile() {
+    const file = document.getElementById('imageFileInput').files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('image').value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function uploadHTMLFile() {
+    const file = document.getElementById('htmlFileInput').files[0];
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('code').value = e.target.result;
+        };
+        reader.readAsText(file);
+    }
+}
+
+/* EDIT GAME MODE */
+
+let editIndex = null;
+
+function startEdit(index) {
+    editIndex = index;
+    const game = games[index];
+    document.getElementById('title').value = game.title;
+    document.getElementById('image').value = game.image || '';
+    document.getElementById('desc').value = game.desc || '';
+    document.getElementById('code').value = game.code;
+    
+    const addBtn = document.querySelector('.adminPanel .addBtn');
+    addBtn.textContent = 'UPDATE GAME';
+    addBtn.style.background = '#ff8800';
+    addBtn.onclick = updateGame;
+    
+    document.getElementById('adminPanel').scrollTop = 0;
+}
+
+function updateGame() {
+    if(editIndex === null) return;
+    
+    games[editIndex] = {
+        title: document.getElementById('title').value,
+        image: document.getElementById('image').value,
+        desc: document.getElementById('desc').value,
+        code: document.getElementById('code').value,
+        views: games[editIndex].views || 0,
+        date: games[editIndex].date || new Date().toLocaleDateString(),
+        updated: new Date().toLocaleString()
+    };
+    
+    save();
+    render();
+    filterGames();
+    
+    // Reset form
+    document.getElementById('title').value = '';
+    document.getElementById('image').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('code').value = '';
+    
+    const addBtn = document.querySelector('.adminPanel .addBtn');
+    addBtn.textContent = 'ADD GAME';
+    addBtn.style.background = '#00aa55';
+    addBtn.onclick = addGame;
+    editIndex = null;
+    
+    alert('Game updated!');
 }
 
 /* RENDER */
@@ -650,14 +796,14 @@ function render(){
 
         <div class="card">
 
-            <img src="${x.image}">
+            <img src="${x.image || 'https://placehold.co/400x200/2a2a2a/white?text=No+Image'}">
 
             <div class="info">
 
-                <h2>${x.title}</h2>
+                <h2>${escapeHtml(x.title)}</h2>
 
                 <div class="desc">
-                ${x.desc || ""}
+                ${escapeHtml(x.desc || "")}
                 </div>
 
                 <button
@@ -680,12 +826,12 @@ function render(){
 
                 <div class="meta">
                     Published:
-                    ${x.date}
+                    ${x.date || 'Unknown'}
                 </div>
 
                 <div class="meta">
                     Updated:
-                    ${x.updated}
+                    ${x.updated || 'Unknown'}
                 </div>
 
             </div>
@@ -701,7 +847,7 @@ function render(){
         margin-bottom:12px;
         ">
 
-        <b>${x.title}</b>
+        <b>${escapeHtml(x.title)}</b>
 
         <br>
 
@@ -709,6 +855,20 @@ function render(){
         ${x.views}
 
         <br><br>
+
+        <button
+        onclick="startEdit(${i})"
+        style="
+        background:#ff8800;
+        color:white;
+        border:none;
+        padding:8px;
+        border-radius:8px;
+        cursor:pointer;
+        margin-right:5px;
+        ">
+        Edit
+        </button>
 
         <button
         onclick="del(${i})"
@@ -728,19 +888,55 @@ function render(){
     });
 }
 
+function escapeHtml(str) {
+    if(!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if(m === '&') return '&amp;';
+        if(m === '<') return '&lt;';
+        if(m === '>') return '&gt;';
+        return m;
+    });
+}
+
+/* SEARCH/FILTER */
+
+function filterGames() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        const title = card.querySelector('h2')?.innerText.toLowerCase() || '';
+        const desc = card.querySelector('.desc')?.innerText.toLowerCase() || '';
+        if(title.includes(searchTerm) || desc.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
 /* ADD GAME */
 
 function addGame(){
 
+    const titleVal = document.getElementById('title').value;
+    const imageVal = document.getElementById('image').value;
+    const descVal = document.getElementById('desc').value;
+    const codeVal = document.getElementById('code').value;
+
+    if(!titleVal || !codeVal){
+        alert("Title and Game Code are required!");
+        return;
+    }
+
     games.push({
 
-        title:title.value,
+        title:titleVal,
 
-        image:image.value,
+        image:imageVal,
 
-        desc:desc.value,
+        desc:descVal,
 
-        code:code.value,
+        code:codeVal,
 
         views:0,
 
@@ -755,10 +951,12 @@ function addGame(){
 
     render();
 
-    title.value="";
-    image.value="";
-    desc.value="";
-    code.value="";
+    document.getElementById('title').value="";
+    document.getElementById('image').value="";
+    document.getElementById('desc').value="";
+    document.getElementById('code').value="";
+    
+    alert("Game added!");
 }
 
 /* PLAY */
@@ -801,27 +999,62 @@ function fullscreenGame(i){
     frame.requestFullscreen();
 }
 
-/* NEW TAB */
+/* NEW TAB - preserves data across tabs */
 
 function newTab(i){
-
-    const win =
-    window.open();
-
-    win.document.write(
-        games[i].code
-    );
+    const game = games[i];
+    const win = window.open();
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${escapeHtml(game.title)}</title>
+            <style>
+                body { margin: 0; padding: 0; }
+                iframe { width: 100vw; height: 100vh; border: none; }
+            </style>
+        </head>
+        <body>
+            ${game.code}
+            <script>
+                // Increment view count in original tab via localStorage sync
+                const originalViews = localStorage.getItem('totalViews');
+                if(originalViews) {
+                    localStorage.setItem('totalViews', parseInt(originalViews) + 1);
+                }
+                // Also update game views
+                const gamesData = localStorage.getItem('games');
+                if(gamesData) {
+                    const gamesArr = JSON.parse(gamesData);
+                    if(gamesArr[${i}]) {
+                        gamesArr[${i}].views = (gamesArr[${i}].views || 0) + 1;
+                        localStorage.setItem('games', JSON.stringify(gamesArr));
+                    }
+                }
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    // Increment local immediately
+    games[i].views++;
+    totalViews++;
+    localStorage.setItem("totalViews", totalViews);
+    save();
+    document.getElementById("totalViews").innerText = totalViews;
 }
 
 /* DELETE */
 
 function del(i){
 
-    games.splice(i,1);
-
-    save();
-
-    render();
+    if(confirm(`Delete "${games[i].title}"?`)){
+        games.splice(i,1);
+        save();
+        render();
+        filterGames();
+    }
 }
 
 /* ADMINS */
