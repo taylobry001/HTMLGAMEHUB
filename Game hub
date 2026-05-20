@@ -214,6 +214,9 @@ header h1{
     width:100%;
     height:180px;
     object-fit:cover;
+    background: #1a1a1a;
+    /* Lazy loading optimization */
+    loading: lazy;
 }
 
 .info{
@@ -374,7 +377,6 @@ header h1{
     margin-top:10px;
     border:none;
     border-radius:10px;
-    background:#00aa55;
     color:white;
     cursor:pointer;
 }
@@ -400,6 +402,131 @@ iframe{
     border:none;
     display:none;
     background:white;
+    /* Optimize iframe loading */
+    will-change: transform;
+    contain: content;
+}
+
+/* Play time display */
+.playtime-display {
+    background: rgba(0,170,255,.1);
+    border: 1px solid rgba(0,170,255,.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #00aaff;
+}
+
+.personal-best {
+    background: rgba(255,170,0,.1);
+    border: 1px solid rgba(255,170,0,.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ffaa00;
+}
+
+/* Import/Export Modal */
+.importExportModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+}
+
+.importExportBox {
+    background: #1d1d1d;
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: pop .3s;
+}
+
+.importExportBox h2 {
+    margin-bottom: 15px;
+}
+
+.importExportBox textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #2a2a2a;
+    color: white;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.importExportBox button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Loading indicator */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-top-color: #00aaff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Performance optimizations */
+.card {
+    will-change: transform;
+    contain: content;
+}
+
+.games {
+    contain: layout style paint;
+}
+
+/* Batch import progress */
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #00aa55;
+    transition: width .3s;
+    width: 0%;
 }
 
 </style>
@@ -410,6 +537,11 @@ iframe{
 <div class="bgEffects" id="bgEffects"></div>
 
 <div class="particles"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
 
 <!-- LOGIN -->
 
@@ -432,6 +564,58 @@ iframe{
 
 </div>
 
+<!-- Import/Export Modal -->
+<div class="importExportModal" id="importExportModal">
+    <div class="importExportBox">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 id="modalTitle">📦 Import/Export Games</h2>
+            <button onclick="closeImportExport()" style="
+                background: red;
+                color: white;
+                border: none;
+                width: 35px;
+                height: 35px;
+                border-radius: 10px;
+                cursor: pointer;
+            ">✕</button>
+        </div>
+
+        <div id="exportSection">
+            <h3>📤 Export All Games</h3>
+            <p style="color: #aaa; font-size: 12px; margin-top: 5px;">
+                Copy this code to transfer all games
+            </p>
+            <textarea id="exportCode" readonly style="min-height: 150px;"></textarea>
+            <button onclick="copyExportCode()" style="background: #0099ff;">
+                📋 Copy Transfer Code
+            </button>
+        </div>
+
+        <div style="margin: 20px 0; border-top: 1px solid #333;"></div>
+
+        <div id="importSection">
+            <h3>📥 Import Games</h3>
+            <p style="color: #aaa; font-size: 12px; margin-top: 5px;">
+                Paste transfer code to import games
+            </p>
+            <textarea id="importCode" placeholder="Paste transfer code here..."></textarea>
+            
+            <label style="display: flex; align-items: center; margin-top: 10px; gap: 8px;">
+                <input type="checkbox" id="replaceExisting">
+                <span style="font-size: 12px;">Replace existing games</span>
+            </label>
+            
+            <button onclick="importGames()" style="background: #00aa55;">
+                📥 Import Games
+            </button>
+            
+            <div class="progress-bar" id="importProgress" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <header>
 
     <h1>🎮 GAME HUB</h1>
@@ -448,13 +632,24 @@ iframe{
     <div>
         Total Plays:
         <span id="totalViews">0</span>
+        |
+        Games: <span id="totalGames">0</span>
     </div>
 
-    <button
-    class="gear"
-    onclick="toggleAdmin()">
-    ⚙️
-    </button>
+    <div style="display: flex; gap: 10px;">
+        <button
+        class="gear"
+        onclick="openImportExport()"
+        title="Import/Export Games">
+        📦
+        </button>
+        <button
+        class="gear"
+        onclick="toggleAdmin()"
+        title="Admin Panel">
+        ⚙️
+        </button>
+    </div>
 
 </div>
 
@@ -464,7 +659,7 @@ iframe{
 
 <!-- GAME VIEW -->
 
-<iframe id="frame"></iframe>
+<iframe id="frame" sandbox="allow-scripts allow-same-origin"></iframe>
 
 <!-- ADMIN -->
 
@@ -524,7 +719,8 @@ iframe{
 
     <button
     class="addBtn"
-    onclick="addGame()">
+    onclick="addGame()"
+    style="background: #00aa55;">
     ADD GAME
     </button>
 
@@ -567,7 +763,8 @@ iframe{
 
     <button
     class="addBtn"
-    onclick="saveAdmins()">
+    onclick="saveAdmins()"
+    style="background: #8844ff;">
     SAVE ADMINS
     </button>
 
@@ -671,9 +868,19 @@ let totalViews =
 localStorage.getItem("totalViews")
 || 0;
 
+// Play time tracking data
+let playTimeData = JSON.parse(localStorage.getItem("playTimeData")) || {};
+
+// Personal best tracking
+let personalBests = JSON.parse(localStorage.getItem("personalBests")) || {};
+
 document.getElementById(
     "totalViews"
 ).innerText = totalViews;
+
+document.getElementById(
+    "totalGames"
+).innerText = games.length;
 
 /* CROSS-TAB SYNC */
 window.addEventListener('storage', function(e) {
@@ -681,6 +888,7 @@ window.addEventListener('storage', function(e) {
         games = JSON.parse(e.newValue) || [];
         render();
         filterGames();
+        document.getElementById("totalGames").innerText = games.length;
     }
     if(e.key === 'totalViews') {
         totalViews = e.newValue || 0;
@@ -689,16 +897,207 @@ window.addEventListener('storage', function(e) {
     if(e.key === 'admins') {
         adminPasswords = JSON.parse(e.newValue) || ["1234"];
     }
+    if(e.key === 'playTimeData') {
+        playTimeData = JSON.parse(e.newValue) || {};
+        render();
+    }
+    if(e.key === 'personalBests') {
+        personalBests = JSON.parse(e.newValue) || {};
+        render();
+    }
 });
 
 /* SAVE */
 
 function save(){
-
     localStorage.setItem(
         "games",
         JSON.stringify(games)
     );
+    document.getElementById("totalGames").innerText = games.length;
+}
+
+/* IMPORT/EXPORT FUNCTIONS */
+
+function openImportExport() {
+    document.getElementById("importExportModal").style.display = "flex";
+    generateExportCode();
+}
+
+function closeImportExport() {
+    document.getElementById("importExportModal").style.display = "none";
+}
+
+function generateExportCode() {
+    const exportData = {
+        version: "2.0",
+        exportDate: new Date().toISOString(),
+        games: games.map(game => ({
+            title: game.title,
+            image: game.image,
+            desc: game.desc,
+            code: game.code,
+            views: game.views,
+            date: game.date,
+            updated: game.updated
+        })),
+        playTimeData: playTimeData,
+        personalBests: personalBests
+    };
+    
+    // Compress the data
+    const jsonStr = JSON.stringify(exportData);
+    const compressed = btoa(encodeURIComponent(jsonStr));
+    
+    document.getElementById("exportCode").value = compressed;
+}
+
+function copyExportCode() {
+    const exportCode = document.getElementById("exportCode");
+    exportCode.select();
+    document.execCommand("copy");
+    
+    // Visual feedback
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = "✅ Copied!";
+    btn.style.background = "#00aa55";
+    
+    setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = "#0099ff";
+    }, 2000);
+}
+
+async function importGames() {
+    const importCode = document.getElementById("importCode").value.trim();
+    const replaceExisting = document.getElementById("replaceExisting").checked;
+    
+    if (!importCode) {
+        alert("Please paste a transfer code first!");
+        return;
+    }
+    
+    try {
+        // Show loading
+        document.getElementById("loadingOverlay").style.display = "flex";
+        const progressBar = document.getElementById("importProgress");
+        const progressFill = document.getElementById("progressFill");
+        progressBar.style.display = "block";
+        progressFill.style.width = "0%";
+        
+        // Decode the transfer code
+        const jsonStr = decodeURIComponent(atob(importCode));
+        const importData = JSON.parse(jsonStr);
+        
+        if (!importData.games || !Array.isArray(importData.games)) {
+            throw new Error("Invalid transfer code format");
+        }
+        
+        // Update progress
+        progressFill.style.width = "20%";
+        await sleep(100);
+        
+        // Process games in batches to prevent UI freezing
+        const batchSize = 5;
+        const totalGames = importData.games.length;
+        let processedGames = 0;
+        
+        if (replaceExisting) {
+            // Replace all games
+            games = [];
+            playTimeData = {};
+            personalBests = {};
+        }
+        
+        for (let i = 0; i < totalGames; i += batchSize) {
+            const batch = importData.games.slice(i, i + batchSize);
+            
+            // Process batch
+            batch.forEach(importedGame => {
+                games.push({
+                    title: importedGame.title,
+                    image: importedGame.image || '',
+                    desc: importedGame.desc || '',
+                    code: importedGame.code,
+                    views: importedGame.views || 0,
+                    date: importedGame.date || new Date().toLocaleDateString(),
+                    updated: importedGame.updated || new Date().toLocaleString()
+                });
+            });
+            
+            processedGames += batch.length;
+            
+            // Update progress
+            const progress = 20 + (processedGames / totalGames) * 70;
+            progressFill.style.width = progress + "%";
+            
+            // Allow UI to update
+            await sleep(50);
+        }
+        
+        // Import play time data if available
+        if (importData.playTimeData) {
+            if (replaceExisting) {
+                playTimeData = importData.playTimeData;
+            } else {
+                // Merge play time data
+                Object.keys(importData.playTimeData).forEach(key => {
+                    if (!playTimeData[key]) {
+                        playTimeData[key] = importData.playTimeData[key];
+                    }
+                });
+            }
+        }
+        
+        // Import personal bests if available
+        if (importData.personalBests) {
+            if (replaceExisting) {
+                personalBests = importData.personalBests;
+            } else {
+                // Merge personal bests
+                Object.keys(importData.personalBests).forEach(key => {
+                    if (!personalBests[key] || importData.personalBests[key] > personalBests[key]) {
+                        personalBests[key] = importData.personalBests[key];
+                    }
+                });
+            }
+        }
+        
+        // Save everything
+        progressFill.style.width = "95%";
+        await sleep(100);
+        
+        save();
+        localStorage.setItem("playTimeData", JSON.stringify(playTimeData));
+        localStorage.setItem("personalBests", JSON.stringify(personalBests));
+        
+        progressFill.style.width = "100%";
+        await sleep(200);
+        
+        // Hide loading
+        document.getElementById("loadingOverlay").style.display = "none";
+        progressBar.style.display = "none";
+        
+        // Clear import field
+        document.getElementById("importCode").value = "";
+        
+        // Update UI
+        render();
+        filterGames();
+        
+        alert(`✅ Successfully imported ${totalGames} games!`);
+        
+    } catch (error) {
+        console.error("Import error:", error);
+        document.getElementById("loadingOverlay").style.display = "none";
+        document.getElementById("importProgress").style.display = "none";
+        alert("❌ Failed to import games. Please check the transfer code and try again.\n\nError: " + error.message);
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /* FILE UPLOADS */
@@ -706,12 +1105,38 @@ function save(){
 function uploadImageFile() {
     const file = document.getElementById('imageFileInput').files[0];
     if(file) {
+        // Compress image before storing
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('image').value = e.target.result;
+            compressImage(e.target.result, 800, 0.7, function(compressed) {
+                document.getElementById('image').value = compressed;
+            });
         };
         reader.readAsDataURL(file);
     }
+}
+
+function compressImage(dataUrl, maxWidth, quality, callback) {
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
 }
 
 function uploadHTMLFile() {
@@ -719,7 +1144,11 @@ function uploadHTMLFile() {
     if(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('code').value = e.target.result;
+            // Optimize HTML content
+            let htmlContent = e.target.result;
+            // Remove excessive whitespace
+            htmlContent = htmlContent.replace(/\s+/g, ' ').replace(/>\s+</g, '><');
+            document.getElementById('code').value = htmlContent;
         };
         reader.readAsText(file);
     }
@@ -777,115 +1206,89 @@ function updateGame() {
     alert('Game updated!');
 }
 
-/* RENDER */
+/* Play time tracking functions */
+function formatPlayTime(seconds) {
+    if (!seconds || seconds === 0) return '0min';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}min`;
+    } else {
+        return `${minutes}min`;
+    }
+}
+
+function getPlayTime(gameIndex) {
+    const key = `game_${gameIndex}`;
+    return playTimeData[key] || 0;
+}
+
+function getPersonalBest(gameIndex) {
+    const key = `game_${gameIndex}`;
+    return personalBests[key] || 0;
+}
+
+function formatPersonalBest(seconds) {
+    if (!seconds || seconds === 0) return 'No record yet';
+    return formatPlayTime(seconds);
+}
+
+/* RENDER - Optimized with lazy loading */
 
 function render(){
+    let g = document.getElementById("games");
+    let a = document.getElementById("adminList");
 
-    let g =
-    document.getElementById("games");
-
-    let a =
-    document.getElementById("adminList");
-
-    g.innerHTML = "";
-    a.innerHTML = "";
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    const tempDiv = document.createElement('div');
+    
+    let gamesHTML = '';
+    let adminHTML = '';
 
     games.forEach((x,i)=>{
 
-        g.innerHTML += `
+        const playTime = getPlayTime(i);
+        const personalBest = getPersonalBest(i);
+        
+        // Use placeholder for missing images
+        const imageSrc = x.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" fill="%232a2a2a"%3E%3Crect width="400" height="200"/%3E%3Ctext x="50%25" y="50%25" fill="white" text-anchor="middle" dy=".3em" font-size="20"%3ENo Image%3C/text%3E%3C/svg%3E';
 
+        gamesHTML += `
         <div class="card">
-
-            <img src="${x.image || 'https://placehold.co/400x200/2a2a2a/white?text=No+Image'}">
-
+            <img src="${imageSrc}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'200\\' fill=\\'%232a2a2a\\'%3E%3Crect width=\\'400\\' height=\\'200\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' fill=\\'white\\' text-anchor=\\'middle\\' dy=\\'.3em\\' font-size=\\'20\\'%3ENo Image%3C/text%3E%3C/svg%3E'">
             <div class="info">
-
                 <h2>${escapeHtml(x.title)}</h2>
-
-                <div class="desc">
-                ${escapeHtml(x.desc || "")}
-                </div>
-
-                <button
-                class="playBtn blue"
-                onclick="play(${i})">
-                PLAY
-                </button>
-
-                <button
-                class="playBtn green"
-                onclick="fullscreenGame(${i})">
-                FULLSCREEN
-                </button>
-
-                <button
-                class="playBtn purple"
-                onclick="newTab(${i})">
-                OPEN IN TAB
-                </button>
-
-                <div class="meta">
-                    Published:
-                    ${x.date || 'Unknown'}
-                </div>
-
-                <div class="meta">
-                    Updated:
-                    ${x.updated || 'Unknown'}
-                </div>
-
+                <div class="desc">${escapeHtml(x.desc || "")}</div>
+                <div class="playtime-display">⏱️ Play Time: ${formatPlayTime(playTime)}</div>
+                <div class="personal-best">🏆 Personal Best: ${formatPersonalBest(personalBest)}</div>
+                <button class="playBtn blue" onclick="play(${i})">PLAY</button>
+                <button class="playBtn green" onclick="fullscreenGame(${i})">FULLSCREEN</button>
+                <button class="playBtn purple" onclick="newTab(${i})">OPEN IN TAB</button>
+                <div class="meta">Published: ${x.date || 'Unknown'}</div>
+                <div class="meta">Updated: ${x.updated || 'Unknown'}</div>
             </div>
+        </div>`;
 
-        </div>
-        `;
-
-        a.innerHTML += `
-
-        <div style="
-        border-bottom:1px solid #333;
-        padding-bottom:12px;
-        margin-bottom:12px;
-        ">
-
-        <b>${escapeHtml(x.title)}</b>
-
-        <br>
-
-        Views:
-        ${x.views}
-
-        <br><br>
-
-        <button
-        onclick="startEdit(${i})"
-        style="
-        background:#ff8800;
-        color:white;
-        border:none;
-        padding:8px;
-        border-radius:8px;
-        cursor:pointer;
-        margin-right:5px;
-        ">
-        Edit
-        </button>
-
-        <button
-        onclick="del(${i})"
-        style="
-        background:red;
-        color:white;
-        border:none;
-        padding:8px;
-        border-radius:8px;
-        cursor:pointer;
-        ">
-        Delete
-        </button>
-
-        </div>
-        `;
+        adminHTML += `
+        <div style="border-bottom:1px solid #333; padding-bottom:12px; margin-bottom:12px;">
+            <b>${escapeHtml(x.title)}</b><br>
+            Views: ${x.views}<br>
+            Play Time: ${formatPlayTime(playTime)}<br>
+            Personal Best: ${formatPersonalBest(personalBest)}<br><br>
+            <button onclick="startEdit(${i})" style="background:#ff8800; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; margin-right:5px;">Edit</button>
+            <button onclick="del(${i})" style="background:red; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">Delete</button>
+            <button onclick="resetPlayTime(${i})" style="background:#8844ff; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; margin-left:5px;">Reset Stats</button>
+        </div>`;
     });
+
+    g.innerHTML = gamesHTML;
+    a.innerHTML = adminHTML;
+    
+    // Update total games count
+    document.getElementById("totalGames").innerText = games.length;
 }
 
 function escapeHtml(str) {
@@ -903,14 +1306,18 @@ function escapeHtml(str) {
 function filterGames() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        const title = card.querySelector('h2')?.innerText.toLowerCase() || '';
-        const desc = card.querySelector('.desc')?.innerText.toLowerCase() || '';
-        if(title.includes(searchTerm) || desc.includes(searchTerm)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
+    
+    // Use requestAnimationFrame for smoother filtering
+    requestAnimationFrame(() => {
+        cards.forEach(card => {
+            const title = card.querySelector('h2')?.innerText.toLowerCase() || '';
+            const desc = card.querySelector('.desc')?.innerText.toLowerCase() || '';
+            if(title.includes(searchTerm) || desc.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     });
 }
 
@@ -929,26 +1336,16 @@ function addGame(){
     }
 
     games.push({
-
         title:titleVal,
-
         image:imageVal,
-
         desc:descVal,
-
         code:codeVal,
-
         views:0,
-
-        date:new Date()
-        .toLocaleDateString(),
-
-        updated:new Date()
-        .toLocaleString()
+        date:new Date().toLocaleDateString(),
+        updated:new Date().toLocaleString()
     });
 
     save();
-
     render();
 
     document.getElementById('title').value="";
@@ -959,80 +1356,175 @@ function addGame(){
     alert("Game added!");
 }
 
-/* PLAY */
+/* PLAY TIME TRACKER */
+let playStartTime = null;
+let currentGameIndex = null;
+let playTimeInterval = null;
+
+function startPlayTimer(gameIndex) {
+    stopPlayTimer();
+    
+    currentGameIndex = gameIndex;
+    playStartTime = Date.now();
+    
+    playTimeInterval = setInterval(() => {
+        updatePlayTime(gameIndex);
+    }, 1000);
+}
+
+function stopPlayTimer() {
+    if (playTimeInterval) {
+        clearInterval(playTimeInterval);
+        playTimeInterval = null;
+    }
+    
+    if (currentGameIndex !== null && playStartTime !== null) {
+        updatePlayTime(currentGameIndex);
+        
+        const sessionTime = Math.floor((Date.now() - playStartTime) / 1000);
+        const key = `game_${currentGameIndex}`;
+        const currentBest = personalBests[key] || 0;
+        
+        if (sessionTime > currentBest) {
+            personalBests[key] = sessionTime;
+            localStorage.setItem("personalBests", JSON.stringify(personalBests));
+        }
+    }
+    
+    currentGameIndex = null;
+    playStartTime = null;
+}
+
+function updatePlayTime(gameIndex) {
+    if (playStartTime === null || gameIndex !== currentGameIndex) return;
+    
+    const key = `game_${gameIndex}`;
+    const previousTime = playTimeData[key] || 0;
+    
+    playTimeData[key] = previousTime + 1;
+    localStorage.setItem("playTimeData", JSON.stringify(playTimeData));
+    
+    // Update personal best
+    const currentBest = personalBests[key] || 0;
+    if (playTimeData[key] > currentBest) {
+        personalBests[key] = playTimeData[key];
+        localStorage.setItem("personalBests", JSON.stringify(personalBests));
+    }
+}
+
+/* RESET PLAY TIME */
+function resetPlayTime(gameIndex) {
+    if (confirm(`Reset play time and personal best for "${games[gameIndex].title}"?`)) {
+        const key = `game_${gameIndex}`;
+        delete playTimeData[key];
+        delete personalBests[key];
+        
+        localStorage.setItem("playTimeData", JSON.stringify(playTimeData));
+        localStorage.setItem("personalBests", JSON.stringify(personalBests));
+        
+        render();
+    }
+}
+
+/* PLAY - Optimized */
 
 function play(i){
-
     games[i].views++;
-
     totalViews++;
-
-    localStorage.setItem(
-        "totalViews",
-        totalViews
-    );
-
+    
+    localStorage.setItem("totalViews", totalViews);
     save();
-
-    document.getElementById(
-        "totalViews"
-    ).innerText = totalViews;
-
-    frame.style.display="block";
-
+    
+    document.getElementById("totalViews").innerText = totalViews;
+    
+    const frame = document.getElementById('frame');
+    frame.style.display = "block";
+    
+    // Use srcdoc for better performance
     frame.srcdoc = games[i].code;
-
-    window.scrollTo({
-        top:frame.offsetTop,
-        behavior:"smooth"
-    });
+    
+    // Smooth scroll to frame
+    frame.scrollIntoView({ behavior: "smooth", block: "start" });
+    
+    startPlayTimer(i);
 }
 
 /* FULLSCREEN */
 
 function fullscreenGame(i){
-
-    frame.style.display="block";
-
+    const frame = document.getElementById('frame');
+    frame.style.display = "block";
     frame.srcdoc = games[i].code;
-
-    frame.requestFullscreen();
+    
+    if (frame.requestFullscreen) {
+        frame.requestFullscreen();
+    } else if (frame.webkitRequestFullscreen) {
+        frame.webkitRequestFullscreen();
+    }
+    
+    startPlayTimer(i);
 }
 
-/* NEW TAB - preserves data across tabs */
+/* NEW TAB - Optimized */
 
 function newTab(i){
     const game = games[i];
-    const win = window.open();
+    const win = window.open('', '_blank');
+    
+    // Write optimized content
     win.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${escapeHtml(game.title)}</title>
             <style>
-                body { margin: 0; padding: 0; }
-                iframe { width: 100vw; height: 100vh; border: none; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { overflow: hidden; }
             </style>
         </head>
         <body>
-            ${game.code}
             <script>
-                // Increment view count in original tab via localStorage sync
-                const originalViews = localStorage.getItem('totalViews');
-                if(originalViews) {
-                    localStorage.setItem('totalViews', parseInt(originalViews) + 1);
-                }
-                // Also update game views
-                const gamesData = localStorage.getItem('games');
-                if(gamesData) {
-                    const gamesArr = JSON.parse(gamesData);
-                    if(gamesArr[${i}]) {
-                        gamesArr[${i}].views = (gamesArr[${i}].views || 0) + 1;
-                        localStorage.setItem('games', JSON.stringify(gamesArr));
+                // Track views and play time
+                try {
+                    const totalViews = localStorage.getItem('totalViews');
+                    if(totalViews) {
+                        localStorage.setItem('totalViews', parseInt(totalViews) + 1);
                     }
+                    
+                    const gamesData = localStorage.getItem('games');
+                    if(gamesData) {
+                        const gamesArr = JSON.parse(gamesData);
+                        if(gamesArr[${i}]) {
+                            gamesArr[${i}].views = (gamesArr[${i}].views || 0) + 1;
+                            localStorage.setItem('games', JSON.stringify(gamesArr));
+                        }
+                    }
+                    
+                    // Play time tracking
+                    let playInterval = setInterval(() => {
+                        const playTimeData = JSON.parse(localStorage.getItem('playTimeData') || '{}');
+                        const key = 'game_${i}';
+                        playTimeData[key] = (playTimeData[key] || 0) + 1;
+                        
+                        const personalBests = JSON.parse(localStorage.getItem('personalBests') || '{}');
+                        if (playTimeData[key] > (personalBests[key] || 0)) {
+                            personalBests[key] = playTimeData[key];
+                            localStorage.setItem('personalBests', JSON.stringify(personalBests));
+                        }
+                        
+                        localStorage.setItem('playTimeData', JSON.stringify(playTimeData));
+                    }, 1000);
+                    
+                    window.addEventListener('beforeunload', () => {
+                        clearInterval(playInterval);
+                    });
+                } catch(e) {
+                    console.error('Tracking error:', e);
                 }
             <\/script>
+            ${game.code}
         </body>
         </html>
     `);
@@ -1043,13 +1535,44 @@ function newTab(i){
     localStorage.setItem("totalViews", totalViews);
     save();
     document.getElementById("totalViews").innerText = totalViews;
+    
+    startPlayTimer(i);
 }
+
+// Stop play timer when frame is hidden
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        const frame = document.getElementById('frame');
+        if (frame.style.display === 'none') {
+            stopPlayTimer();
+        }
+    }
+});
+
+const frameObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            const frame = document.getElementById('frame');
+            if (frame.style.display === 'none') {
+                stopPlayTimer();
+            }
+        }
+    });
+});
+
+const frame = document.getElementById('frame');
+frameObserver.observe(frame, { attributes: true });
 
 /* DELETE */
 
 function del(i){
-
     if(confirm(`Delete "${games[i].title}"?`)){
+        const key = `game_${i}`;
+        delete playTimeData[key];
+        delete personalBests[key];
+        localStorage.setItem("playTimeData", JSON.stringify(playTimeData));
+        localStorage.setItem("personalBests", JSON.stringify(personalBests));
+        
         games.splice(i,1);
         save();
         render();
@@ -1060,319 +1583,116 @@ function del(i){
 /* ADMINS */
 
 function saveAdmins(){
-
-    const vals =
-    document.getElementById(
-        "admins"
-    ).value.split(",");
-
+    const vals = document.getElementById("admins").value.split(",").map(v => v.trim()).filter(v => v);
     adminPasswords = vals;
-
-    localStorage.setItem(
-        "admins",
-        JSON.stringify(vals)
-    );
-
+    localStorage.setItem("admins", JSON.stringify(vals));
     alert("Admins saved");
 }
 
 /* PARTICLES */
 
 function toggleParticles(){
-
-    const enabled =
-    document.getElementById(
-        "particlesToggle"
-    ).checked;
-
-    document.querySelector(
-        ".particles"
-    ).style.display =
-    enabled ? "block" : "none";
+    const enabled = document.getElementById("particlesToggle").checked;
+    document.querySelector(".particles").style.display = enabled ? "block" : "none";
 }
 
 /* BACKGROUNDS */
 
 function changeBG(){
-
-    const val =
-    document.getElementById(
-        "bgSelect"
-    ).value;
-
-    const body =
-    document.body;
-
-    const effects =
-    document.getElementById(
-        "bgEffects"
-    );
+    const val = document.getElementById("bgSelect").value;
+    const body = document.body;
+    const effects = document.getElementById("bgEffects");
 
     effects.innerHTML = "";
-
-    body.style.background =
-    "#050505";
-
-    /* MATRIX */
+    body.style.background = "#050505";
 
     if(val==="matrix"){
-
-        body.style.background =
-        "linear-gradient(180deg,#000,#001100)";
-
+        body.style.background = "linear-gradient(180deg,#000,#001100)";
         effects.innerHTML = `
         <div class="cyberLines"></div>
-
-        <div class="glowOrb"
-        style="
-        width:300px;
-        height:300px;
-        background:#00ff66;
-        top:20%;
-        left:10%;
-        ">
-        </div>
-        `;
+        <div class="glowOrb" style="width:300px; height:300px; background:#00ff66; top:20%; left:10%;"></div>`;
     }
 
-    /* STARS */
-
     if(val==="stars"){
-
-        body.style.background =
-        "radial-gradient(circle,#111,#000)";
-
+        body.style.background = "radial-gradient(circle,#111,#000)";
         for(let i=0;i<120;i++){
-
-            const star =
-            document.createElement("div");
-
-            star.style.position="absolute";
-            star.style.width="2px";
-            star.style.height="2px";
-            star.style.background="white";
-            star.style.left=Math.random()*100+"vw";
-            star.style.top=Math.random()*100+"vh";
-            star.style.opacity=Math.random();
-
+            const star = document.createElement("div");
+            star.style.cssText = `position:absolute; width:2px; height:2px; background:white; left:${Math.random()*100}vw; top:${Math.random()*100}vh; opacity:${Math.random()}`;
             effects.appendChild(star);
         }
     }
 
-    /* SUNSET */
-
     if(val==="sunset"){
-
-        body.style.background =
-        "linear-gradient(135deg,#ff5f6d,#ffc371)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:500px;
-        height:500px;
-        background:#ff9966;
-        top:10%;
-        left:60%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(135deg,#ff5f6d,#ffc371)";
+        effects.innerHTML = `<div class="glowOrb" style="width:500px; height:500px; background:#ff9966; top:10%; left:60%;"></div>`;
     }
-
-    /* PURPLE */
 
     if(val==="purple"){
-
-        body.style.background =
-        "linear-gradient(135deg,#0f001f,#3a005f)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:450px;
-        height:450px;
-        background:#bb66ff;
-        top:20%;
-        left:30%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(135deg,#0f001f,#3a005f)";
+        effects.innerHTML = `<div class="glowOrb" style="width:450px; height:450px; background:#bb66ff; top:20%; left:30%;"></div>`;
     }
-
-    /* OCEAN */
 
     if(val==="ocean"){
-
-        body.style.background =
-        "linear-gradient(180deg,#001f3f,#005577)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:500px;
-        height:500px;
-        background:#00bbff;
-        top:40%;
-        left:50%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(180deg,#001f3f,#005577)";
+        effects.innerHTML = `<div class="glowOrb" style="width:500px; height:500px; background:#00bbff; top:40%; left:50%;"></div>`;
     }
-
-    /* FIRE */
 
     if(val==="fire"){
-
-        body.style.background =
-        "linear-gradient(180deg,#220000,#661100)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:500px;
-        height:500px;
-        background:#ff4400;
-        top:30%;
-        left:30%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(180deg,#220000,#661100)";
+        effects.innerHTML = `<div class="glowOrb" style="width:500px; height:500px; background:#ff4400; top:30%; left:30%;"></div>`;
     }
-
-    /* GRID */
 
     if(val==="grid"){
-
-        body.style.background =
-        "#050505";
-
+        body.style.background = "#050505";
         effects.innerHTML = `
         <div class="cyberLines"></div>
-
-        <div class="glowOrb"
-        style="
-        width:400px;
-        height:400px;
-        background:#00ccff;
-        top:20%;
-        left:50%;
-        ">
-        </div>
-        `;
+        <div class="glowOrb" style="width:400px; height:400px; background:#00ccff; top:20%; left:50%;"></div>`;
     }
-
-    /* FOREST */
 
     if(val==="forest"){
-
-        body.style.background =
-        "linear-gradient(180deg,#021,#041)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:500px;
-        height:500px;
-        background:#00ff99;
-        top:50%;
-        left:20%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(180deg,#021,#041)";
+        effects.innerHTML = `<div class="glowOrb" style="width:500px; height:500px; background:#00ff99; top:50%; left:20%;"></div>`;
     }
-
-    /* BLOOD */
 
     if(val==="blood"){
-
-        body.style.background =
-        "linear-gradient(180deg,#100,#400)";
-
-        effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:500px;
-        height:500px;
-        background:#ff0033;
-        top:30%;
-        left:60%;
-        ">
-        </div>
-        `;
+        body.style.background = "linear-gradient(180deg,#100,#400)";
+        effects.innerHTML = `<div class="glowOrb" style="width:500px; height:500px; background:#ff0033; top:30%; left:60%;"></div>`;
     }
-
-    /* NEON */
 
     if(val==="neon"){
-
-        body.style.background =
-        "linear-gradient(135deg,#111,#000)";
-
+        body.style.background = "linear-gradient(135deg,#111,#000)";
         effects.innerHTML = `
-        <div class="glowOrb"
-        style="
-        width:400px;
-        height:400px;
-        background:#ff00ff;
-        top:20%;
-        left:20%;
-        ">
-        </div>
-
-        <div class="glowOrb"
-        style="
-        width:400px;
-        height:400px;
-        background:#00ffff;
-        top:40%;
-        left:60%;
-        ">
-        </div>
-        `;
+        <div class="glowOrb" style="width:400px; height:400px; background:#ff00ff; top:20%; left:20%;"></div>
+        <div class="glowOrb" style="width:400px; height:400px; background:#00ffff; top:40%; left:60%;"></div>`;
     }
 
-    localStorage.setItem(
-        "bg",
-        val
-    );
+    localStorage.setItem("bg", val);
 }
 
 /* LOAD BG */
 
-const savedBG =
-localStorage.getItem("bg");
-
+const savedBG = localStorage.getItem("bg");
 if(savedBG){
-
-    document.getElementById(
-        "bgSelect"
-    ).value = savedBG;
-
+    document.getElementById("bgSelect").value = savedBG;
     changeBG();
 }
 
-/* PARTICLES */
-
-const p =
-document.querySelector(".particles");
+/* PARTICLES - Optimized */
+const p = document.querySelector(".particles");
+const fragment = document.createDocumentFragment();
 
 for(let i=0;i<100;i++){
-
-    let s =
-    document.createElement("span");
-
-    s.style.left =
-    Math.random()*100+"vw";
-
-    s.style.animationDuration =
-    (Math.random()*10+5)+"s";
-
-    p.appendChild(s);
+    let s = document.createElement("span");
+    s.style.left = Math.random()*100+"vw";
+    s.style.animationDuration = (Math.random()*10+5)+"s";
+    fragment.appendChild(s);
 }
+p.appendChild(fragment);
 
 /* START */
-
 render();
+playTimeData = JSON.parse(localStorage.getItem("playTimeData")) || {};
+personalBests = JSON.parse(localStorage.getItem("personalBests")) || {};
 
 </script>
 
