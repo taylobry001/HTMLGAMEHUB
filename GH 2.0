@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Game Hub</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+:root {
+    --bg-primary: #050505;
+    --bg-secondary: rgba(20, 20, 20, 0.75);
+    --bg-card: rgba(20, 20, 20, 0.65);
+    --accent: #00aaff;
+    --accent2: #0066cc;
+    --text: #ffffff;
+    --text-secondary: #aaa;
+    --border: rgba(255, 255, 255, 0.08);
+    --input-bg: #2a2a2a;
+    --success: #00aa55;
+    --danger: #ff4444;
+    --warning: #ffaa00;
+    --purple: #8844ff;
+    --orange: #ff8800;
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text);
+    overflow-x: hidden;
+    transition: 0.5s;
+}
+
+/* === ENHANCED BACKGROUND FX === */
+.bgEffects {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+#bgCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.particles {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.particles span {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    opacity: 0.15;
+    border-radius: 50%;
+    animation: float linear infinite;
+}
+
+.particles span:nth-child(odd) {
+    width: 2px;
+    height: 2px;
+    background: #00aaff;
+    box-shadow: 0 0 4px #00aaff;
+}
+
+.particles span:nth-child(3n) {
+    width: 4px;
+    height: 4px;
+    background: #0066cc;
+    box-shadow: 0 0 6px #0066cc;
+    opacity: 0.2;
+}
+
+@keyframes float {
+    from { transform: translateY(100vh) rotate(0deg); }
+    to { transform: translateY(-10vh) rotate(360deg); }
+}
+
+/* === CYBER GRID === */
+.cyberLines {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(90deg, transparent 0px, rgba(0, 170, 255, 0.05) 2px, transparent 4px);
+    animation: moveGrid 20s linear infinite;
+}
+
+.cyberLines::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg, transparent 0px, rgba(0, 102, 204, 0.03) 2px, transparent 4px);
+}
+
+@keyframes moveGrid {
+    from { transform: translateX(0) translateY(0); }
+    to { transform: translateX(-50%) translateY(-50%); }
+}
+
+/* === ORBS === */
+.glowOrb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    animation: floatOrb 12s ease-in-out infinite;
+}
+
+.glowOrb:nth-child(2) {
+    animation-delay: -4s;
+    animation-duration: 15s;
+}
+
+.glowOrb:nth-child(3) {
+    animation-delay: -8s;
+    animation-duration: 18s;
+}
+
+@keyframes floatOrb {
+    0% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(80px, -60px) scale(1.15); }
+    50% { transform: translate(-40px, -100px) scale(1.25); }
+    75% { transform: translate(-80px, -20px) scale(1.1); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+/* === HEADER === */
+header {
+    text-align: center;
+    padding: 25px;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+}
+
+header h1 {
+    font-size: 48px;
+    text-shadow: 0 0 10px #00aaff, 0 0 30px #00aaff, 0 0 60px #00aaff;
+}
+
+/* === QOL 6: KEYBOARD SHORTCUTS HINT === */
+.shortcuts-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid var(--accent);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.shortcuts-hint.show {
+    opacity: 1;
+}
+
+/* === TOPBAR === */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(15, 15, 15, 0.7);
+    backdrop-filter: blur(12px);
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.search-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 5px 15px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    transition: 0.3s;
+}
+
+.search-area:focus-within {
+    border-color: #00aaff;
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+}
+
+.search-area input {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px;
+    width: 200px;
+    outline: none;
+}
+
+.gear {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: 0.3s;
+    padding: 8px 12px;
+    border-radius: 12px;
+    position: relative;
+}
+
+.gear:hover {
+    transform: rotate(90deg);
+    background: rgba(0, 170, 255, 0.2);
+    border-color: #00aaff;
+}
+
+/* === QOL 1: CATEGORY TAGS === */
+.category-filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    background: rgba(10, 10, 10, 0.5);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow-x: auto;
+}
+
+.category-tag {
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #aaa;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.3s;
+    white-space: nowrap;
+}
+
+.category-tag:hover,
+.category-tag.active {
+    background: rgba(0, 170, 255, 0.2);
+    border-color: #00aaff;
+    color: #00aaff;
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.2);
+}
+
+/* === QOL 4: RECENTLY PLAYED === */
+.recently-played {
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    overflow-x: auto;
+}
+
+.recently-played span {
+    color: var(--accent);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.recent-game-chip {
+    padding: 4px 12px;
+    background: rgba(0, 170, 255, 0.1);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.recent-game-chip:hover {
+    background: rgba(0, 170, 255, 0.3);
+}
+
+/* === GAMES GRID === */
+.games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.35);
+    transition: 0.3s;
+    position: relative;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 102, 204, 0.05));
+    opacity: 0;
+    transition: 0.3s;
+    pointer-events: none;
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 0 35px rgba(0, 170, 255, 0.35);
+    border-color: rgba(0, 170, 255, 0.3);
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #1a1a1a;
+    transition: 0.3s;
+}
+
+.card:hover img {
+    filter: brightness(1.1);
+}
+
+.info {
+    padding: 15px;
+}
+
+.info h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.meta {
+    color: #777;
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* === QOL 2: GAME TAGS ON CARDS === */
+.game-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 5px 0;
+}
+
+.game-tag {
+    padding: 2px 8px;
+    background: rgba(0, 170, 255, 0.15);
+    border-radius: 10px;
+    font-size: 10px;
+    color: #00aaff;
+    border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+/* === BUTTONS === */
+.playBtn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.playBtn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: 0.4s;
+}
+
+.playBtn:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+.playBtn:hover {
+    transform: scale(1.03);
+}
+
+.blue { background: #0099ff; }
+.green { background: #00aa55; }
+.purple { background: #8844ff; }
+.orange { background: #ff8800; }
+
+/* === QOL 8: FAVORITES STAR === */
+.favorite-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: white;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.3s;
+    z-index: 5;
+    backdrop-filter: blur(4px);
+}
+
+.favorite-btn:hover {
+    transform: scale(1.2);
+}
+
+.favorite-btn.active {
+    color: #ff4081;
+    background: rgba(255, 0, 100, 0.3);
+}
+
+/* === QOL 9: RATING STARS === */
+.rating {
+    display: flex;
+    gap: 2px;
+    margin: 5px 0;
+}
+
+.star {
+    color: #555;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.star:hover,
+.star.active {
+    color: #ffd700;
+    text-shadow: 0 0 5px #ffd700;
+}
+
+/* === QOL 11: COMMENTS SECTION === */
+.comments-section {
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 8px;
+}
+
+.comment-input {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.comment-list {
+    max-height: 100px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+.comment-item {
+    padding: 4px 0;
+    font-size: 11px;
+    color: #ccc;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* === LOGIN === */
+.loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+}
+
+.loginBox {
+    background: #1d1d1d;
+    padding: 25px;
+    border-radius: 16px;
+    width: 320px;
+    animation: pop 0.3s;
+    border: 1px solid rgba(0, 170, 255, 0.3);
+}
+
+@keyframes pop {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.loginBox input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #2a2a2a;
+    color: white;
+}
+
+.loginBox button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #00aa55;
+    color: white;
+}
+
+/* === QOL 12: PROFILES === */
+.profile-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.profile-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.profile-name {
+    font-size: 13px;
+    color: var(--accent);
+}
+
+.profile-switch-btn {
+    padding: 4px 10px;
+    background: rgba(0, 170, 255, 0.2);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+/* === QOL 6: ACHIEVEMENTS === */
+.achievement-popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #ffd700;
+    padding: 15px 25px;
+    border-radius: 15px;
+    z-index: 99999;
+    animation: achievementSlide 3s ease-out forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@keyframes achievementSlide {
+    0% { top: -100px; opacity: 0; }
+    20% { top: 20px; opacity: 1; }
+    80% { top: 20px; opacity: 1; }
+    100% { top: -100px; opacity: 0; }
+}
+
+/* === ADMIN PANEL === */
+.adminPanel {
+    position: fixed;
+    top: 0;
+    right: -460px;
+    width: 460px;
+    height: 100%;
+    overflow: auto;
+    background: linear-gradient(180deg, rgba(20, 20, 20, 0.97), rgba(5, 5, 5, 0.98));
+    backdrop-filter: blur(16px);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    transition: 0.3s;
+    z-index: 9999;
+}
+
+.adminPanel.active { right: 0; }
+
+.adminPanel input,
+.adminPanel textarea,
+.adminPanel select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: white;
+}
+
+.addBtn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+.file-label {
+    display: inline-block;
+    background: #3a3a3a;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+}
+
+.file-label:hover { background: #4a4a4a; }
+
+iframe {
+    width: 100%;
+    height: 700px;
+    border: none;
+    display: none;
+    background: white;
+    will-change: transform;
+    contain: content;
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* === PLAY TIME === */
+.playtime-display {
+    background: rgba(0, 170, 255, 0.1);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #00aaff;
+}
+
+.personal-best {
+    background: rgba(255, 170, 0, 0.1);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ffaa00;
+}
+
+/* === QOL 10: STATS DASHBOARD === */
+.stats-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: none;
+}
+
+.stats-overlay.active { display: block; }
+
+.stats-dashboard {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    z-index: 10001;
+    display: none;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.stats-dashboard.active { display: block; animation: pop 0.3s; }
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-value { color: #00aaff; font-weight: bold; }
+
+/* === QOL 13: PERFORMANCE MODE === */
+.performance-mode .particles { display: none !important; }
+.performance-mode .glowOrb { display: none !important; }
+.performance-mode .cyberLines { display: none !important; }
+.performance-mode .card { backdrop-filter: none !important; }
+.performance-mode .card::before { display: none !important; }
+
+/* === IMPORT/EXPORT === */
+.importExportModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    backdrop-filter: blur(10px);
+}
+
+.importExportBox {
+    background: #1d1d1d;
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: pop 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.importExportBox h2 { margin-bottom: 15px; }
+
+.importExportBox textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: white;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.importExportBox button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+/* === QOL 5: TOAST NOTIFICATIONS === */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    padding: 15px 20px;
+    border-radius: 12px;
+    color: white;
+    animation: slideIn 0.3s ease-out;
+    min-width: 250px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.toast.success { border-color: #00aa55; }
+.toast.error { border-color: #ff4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* === QOL 14: AUTO-SAVE INDICATOR === */
+.auto-save-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 170, 85, 0.2);
+    border: 1px solid rgba(0, 170, 85, 0.4);
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    color: #00aa55;
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.auto-save-indicator.show { opacity: 1; }
+
+/* Loading */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #00aaff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* QOL 3: SHARE MODAL */
+.share-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10003;
+}
+
+.share-box {
+    background: #1d1d1d;
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid rgba(0, 170, 255, 0.3);
+}
+
+.share-box input {
+    width: 100%;
+    padding: 10px;
+    background: var(--input-bg);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    margin: 10px 0;
+    text-align: center;
+}
+
+/* Progress bar */
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #00aa55;
+    transition: width 0.3s;
+    width: 0%;
+}
+
+/* Performance mode FPS */
+.fps-counter {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #00ff00;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    z-index: 99999;
+    display: none;
+    font-family: monospace;
+}
+
+/* === QOL 7: THEME CUSTOMIZER === */
+.theme-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.theme-preset {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: 0.2s;
+}
+
+.theme-preset:hover { border-color: white; transform: scale(1.1); }
+.theme-preset.active { border-color: #00aaff; box-shadow: 0 0 10px #00aaff; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    header h1 { font-size: 32px; }
+    .topbar { flex-direction: column; }
+    .games { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .adminPanel { width: 100%; right: -100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="bgEffects" id="bgEffects">
+    <canvas id="bgCanvas"></canvas>
+    <div class="cyberLines"></div>
+    <div class="glowOrb" style="width: 400px; height: 400px; background: #00aaff; top: 20%; left: 25%;"></div>
+    <div class="glowOrb" style="width: 350px; height: 350px; background: #0066cc; top: 50%; left: 60%;"></div>
+    <div class="glowOrb" style="width: 300px; height: 300px; background: #0099ff; top: 70%; left: 15%;"></div>
+</div>
+
+<div class="particles"></div>
+
+<!-- FPS Counter -->
+<div class="fps-counter" id="fpsCounter">FPS: 60</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Auto-save indicator -->
+<div class="auto-save-indicator" id="autoSaveIndicator">💾 Auto-saved</div>
+
+<!-- Keyboard shortcuts hint -->
+<div class="shortcuts-hint" id="shortcutsHint">Press <b>Ctrl+K</b> to search | <b>Ctrl+H</b> for help</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
+
+<!-- Stats Dashboard Overlay -->
+<div class="stats-overlay" id="statsOverlay" onclick="closeStats()"></div>
+<div class="stats-dashboard" id="statsDashboard">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📊 Game Statistics</h2>
+        <button onclick="closeStats()" style="background: red; color: white; border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer;">✕</button>
+    </div>
+    <div class="stat-item"><span>Total Games</span><span class="stat-value" id="statTotalGames">0</span></div>
+    <div class="stat-item"><span>Total Plays</span><span class="stat-value" id="statTotalPlays">0</span></div>
+    <div class="stat-item"><span>Total Play Time</span><span class="stat-value" id="statTotalTime">0min</span></div>
+    <div class="stat-item"><span>Most Played Game</span><span class="stat-value" id="statMostPlayed">-</span></div>
+    <div class="stat-item"><span>Average Rating</span><span class="stat-value" id="statAvgRating">-</span></div>
+    <div class="stat-item"><span>🎯 Achievements Unlocked</span><span class="stat-value" id="statAchievements">0/10</span></div>
+    <div style="margin-top: 15px;">
+        <h4>🏆 Achievements</h4>
+        <div id="achievementList" style="font-size: 12px; color: #aaa;"></div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="share-modal" id="shareModal">
+    <div class="share-box">
+        <h3>🔗 Share Game</h3>
+        <input type="text" id="shareLink" readonly>
+        <button onclick="copyShareLink()" class="playBtn blue">📋 Copy Link</button>
+        <button onclick="closeShare()" style="background: red; border: none; color: white; padding: 10px 20px; border-radius: 10px; margin-top: 5px;">Close</button>
+    </div>
+</div>
+
+<!-- LOGIN -->
+<div class="loginOverlay" id="loginOverlay">
+    <div class="loginBox">
+        <h2>Admin Login</h2>
+        <input type="password" id="pass" placeholder="Password">
+        <button onclick="login()">Unlock</button>
+    </div>
+</div>
+
+<!-- Import/Export Modal -->
+<div class="importExportModal" id="importExportModal">
+    <div class="importExportBox">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>📦 Import/Export Games</h2>
+            <button onclick="closeImportExport()" style="background: red; color: white; border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer;">✕</button>
+        </div>
+        <div id="exportSection">
+            <h3>📤 Export All Games</h3>
+            <textarea id="exportCode" readonly style="min-height: 150px;"></textarea>
+            <button onclick="copyExportCode()" style="background: #0099ff;">📋 Copy Transfer Code</button>
+        </div>
+        <div style="margin: 20px 0; border-top: 1px solid #333;"></div>
+        <div id="importSection">
+            <h3>📥 Import Games</h3>
+            <textarea id="importCode" placeholder="Paste transfer code here..."></textarea>
+            <label style="display: flex; align-items: center; margin-top: 10px; gap: 8px;">
+                <input type="checkbox" id="replaceExisting">
+                <span style="font-size: 12px;">Replace existing games</span>
+            </label>
+            <button onclick="importGames()" style="background: #00aa55;">📥 Import Games</button>
+            <div class="progress-bar" id="importProgress" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<header>
+    <h1>🎮 GAME HUB</h1>
+</header>
+
+<!-- Profile Bar -->
+<div class="profile-bar" id="profileBar">
+    <div class="profile-avatar" id="profileAvatar">👤</div>
+    <span class="profile-name" id="profileName">Player 1</span>
+    <button class="profile-switch-btn" onclick="switchProfile()">🔄 Switch Profile</button>
+    <button class="profile-switch-btn" onclick="togglePerformanceMode()" style="margin-left: 5px;" id="perfBtn">⚡ Perf Mode</button>
+</div>
+
+<div class="topbar">
+    <div class="search-area">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search games... (Ctrl+K)" onkeyup="filterGames()">
+    </div>
+    <div>
+        Total Plays: <span id="totalViews">0</span> | Games: <span id="totalGames">0</span>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <button class="gear" onclick="openStats()" title="Statistics">📊</button>
+        <button class="gear" onclick="openImportExport()" title="Import/Export">📦</button>
+        <button class="gear" onclick="toggleAdmin()" title="Admin Panel">⚙️</button>
+    </div>
+</div>
+
+<!-- Category Filters -->
+<div class="category-filters" id="categoryFilters">
+    <span class="category-tag active" onclick="filterByCategory('all', this)">🎯 All Games</span>
+    <span class="category-tag" onclick="filterByCategory('favorites', this)">⭐ Favorites</span>
+    <span class="category-tag" onclick="filterByCategory('recent', this)">🕐 Recent</span>
+    <span class="category-tag" onclick="filterByCategory('mostPlayed', this)">🔥 Most Played</span>
+    <span class="category-tag" onclick="filterByCategory('action', this)">🎯 Action</span>
+    <span class="category-tag" onclick="filterByCategory('puzzle', this)">🧩 Puzzle</span>
+    <span class="category-tag" onclick="filterByCategory('strategy', this)">♟️ Strategy</span>
+    <span class="category-tag" onclick="filterByCategory('racing', this)">🏎️ Racing</span>
+</div>
+
+<!-- Recently Played -->
+<div class="recently-played" id="recentlyPlayed">
+    <span>🕐 Recent:</span>
+    <div id="recentList" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+</div>
+
+<!-- GAMES -->
+<div class="games" id="games"></div>
+
+<!-- GAME VIEW -->
+<iframe id="frame" sandbox="allow-scripts allow-same-origin"></iframe>
+
+<!-- ADMIN -->
+<div class="adminPanel" id="adminPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>ADMIN PANEL</h2>
+        <button onclick="closeAdmin()" style="background: red; color: white; border: none; width: 35px; height: 35px; border-radius: 10px; cursor: pointer;">✕</button>
+    </div>
+    <br>
+    <input id="title" placeholder="Game Title">
+    <input id="image" placeholder="Image URL">
+    <div>
+        <label class="file-label" onclick="document.getElementById('imageFileInput').click()">📁 Upload Image File</label>
+        <input type="file" id="imageFileInput" accept="image/*" style="display:none" onchange="uploadImageFile()">
+    </div>
+    <textarea id="desc" rows="3" placeholder="Game Description"></textarea>
+    <input id="tags" placeholder="Tags (comma separated: action, puzzle, etc.)">
+    <textarea id="code" rows="8" placeholder="FULL HTML GAME"></textarea>
+    <div>
+        <label class="file-label" onclick="document.getElementById('htmlFileInput').click()">📄 Upload HTML File</label>
+        <input type="file" id="htmlFileInput" accept=".html" style="display:none" onchange="uploadHTMLFile()">
+    </div>
+    <button class="addBtn" onclick="addGame()" style="background: #00aa55;">ADD GAME</button>
+    <br><br>
+    <h3>Backgrounds</h3>
+    <select id="bgSelect" onchange="changeBG()">
+        <option value="default">Default Cosmic</option>
+        <option value="matrix">Matrix Rain</option>
+        <option value="stars">Starry Night</option>
+        <option value="sunset">Sunset Glow</option>
+        <option value="purple">Purple Void</option>
+        <option value="ocean">Deep Ocean</option>
+        <option value="fire">Fire Storm</option>
+        <option value="grid">Cyber Grid</option>
+        <option value="forest">Mystic Forest</option>
+        <option value="blood">Blood Moon</option>
+        <option value="neon">Neon City</option>
+    </select>
+    <br><br>
+    <h3>🎨 Theme Presets</h3>
+    <div class="theme-presets">
+        <div class="theme-preset active" style="background: linear-gradient(135deg, #00aaff, #0066cc);" onclick="applyTheme('default')" title="Default Blue"></div>
+        <div class="theme-preset" style="background: linear-gradient(135deg, #ff00ff, #8800ff);" onclick="applyTheme('purple')" title="Purple"></div>
+        <div class="theme-preset" style="background: linear-gradient(135deg, #00ff88, #00aa55);" onclick="applyTheme('green')" title="Green"></div>
+        <div class="theme-preset" style="background: linear-gradient(135deg, #ff4400, #ff8800);" onclick="applyTheme('orange')" title="Orange"></div>
+        <div class="theme-preset" style="background: linear-gradient(135deg, #ff0088, #ff4088);" onclick="applyTheme('pink')" title="Pink"></div>
+    </div>
+    <br>
+    <label>
+        <input type="checkbox" id="particlesToggle" checked onchange="toggleParticles()"> Particles
+    </label>
+    <br><br>
+    <input id="admins" placeholder="Admin Passwords comma separated">
+    <button class="addBtn" onclick="saveAdmins()" style="background: #8844ff;">SAVE ADMINS</button>
+    <br><br>
+    <h3>Games</h3>
+    <div id="adminList"></div>
+</div>
+
+<script>
+/* ========== DATA MANAGEMENT ========== */
+function setCookie(name, value, days = 365) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = name + "=" + encodeURIComponent(value) + ";path=/;expires=" + d.toUTCString() + ";SameSite=Lax";
+}
+
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+}
+
+function saveData(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        setCookie('gh_' + key, JSON.stringify(data));
+    } catch (e) {
+        setCookie('gh_' + key, JSON.stringify(data));
+    }
+}
+
+function loadData(key, defaultVal) {
+    try {
+        const local = localStorage.getItem(key);
+        if (local) return JSON.parse(local);
+        const cookie = getCookie('gh_' + key);
+        if (cookie) { localStorage.setItem(key, cookie); return JSON.parse(cookie); }
+    } catch (e) {}
+    return defaultVal;
+}
+
+/* ========== STATE ========== */
+let adminPasswords = loadData("admins", ["1234"]);
+let unlocked = sessionStorage.getItem("admin") === "true";
+let games = loadData("games", []);
+let totalViews = parseInt(loadData("totalViews", 0));
+let playTimeData = loadData("playTimeData", {});
+let personalBests = loadData("personalBests", {});
+let ratings = loadData("ratings", {});
+let favorites = loadData("favorites", []);
+let gameDates = loadData("gameDates", {});
+let gameTags = loadData("gameTags", {});
+let comments = loadData("comments", {});
+let achievements = loadData("achievements", {});
+let recentlyPlayed = loadData("recentlyPlayed", []);
+let profiles = loadData("profiles", { "Player 1": { favorites: [], playTimeData: {}, personalBests: {}, ratings: {}, achievements: {} } });
+let currentProfile = loadData("currentProfile", "Player 1");
+let performanceMode = loadData("performanceMode", false);
+
+/* ========== INIT ========== */
+document.getElementById("totalViews").innerText = totalViews;
+document.getElementById("totalGames").innerText = games.length;
+document.getElementById("admins").value = adminPasswords.join(",");
+document.getElementById("profileName").innerText = currentProfile;
+if (performanceMode) document.body.classList.add('performance-mode');
+
+/* ========== CROSS-TAB SYNC ========== */
+window.addEventListener('storage', function(e) {
+    const key = e.key?.replace('gh_', '');
+    if (e.key === 'games' || key === 'games') { games = JSON.parse(e.newValue || '[]'); render(); filterGames(); }
+    if (e.key === 'totalViews' || key === 'totalViews') { totalViews = parseInt(e.newValue || 0); updateUI(); }
+    if (e.key === 'playTimeData' || key === 'playTimeData') { playTimeData = JSON.parse(e.newValue || '{}'); render(); }
+    if (e.key === 'personalBests' || key === 'personalBests') { personalBests = JSON.parse(e.newValue || '{}'); render(); }
+    if (e.key === 'ratings' || key === 'ratings') { ratings = JSON.parse(e.newValue || '{}'); render(); }
+    if (e.key === 'favorites' || key === 'favorites') { favorites = JSON.parse(e.newValue || '[]'); render(); }
+    if (e.key === 'recentlyPlayed' || key === 'recentlyPlayed') { recentlyPlayed = JSON.parse(e.newValue || '[]'); updateRecentlyPlayed(); }
+});
+
+/* ========== QOL 5: TOAST ========== */
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* ========== QOL 14: AUTO-SAVE ========== */
+function autoSave() {
+    saveAll();
+    const indicator = document.getElementById('autoSaveIndicator');
+    indicator.classList.add('show');
+    setTimeout(() => indicator.classList.remove('show'), 1500);
+}
+
+function saveAll() {
+    saveData("games", games);
+    saveData("totalViews", totalViews);
+    saveData("playTimeData", playTimeData);
+    saveData("personalBests", personalBests);
+    saveData("ratings", ratings);
+    saveData("favorites", favorites);
+    saveData("gameDates", gameDates);
+    saveData("gameTags", gameTags);
+    saveData("comments", comments);
+    saveData("achievements", achievements);
+    saveData("recentlyPlayed", recentlyPlayed);
+    saveData("profiles", profiles);
+    saveData("currentProfile", currentProfile);
+    saveData("performanceMode", performanceMode);
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById("totalGames").innerText = games.length;
+    document.getElementById("totalViews").innerText = totalViews;
+}
+
+/* ========== QOL 6: ACHIEVEMENTS ========== */
+const achievementDefs = [
+    { id: 'first_play', name: 'First Steps', desc: 'Play your first game', icon: '🎮', condition: () => totalViews >= 1 },
+    { id: 'ten_plays', name: 'Getting Started', desc: 'Play 10 games', icon: '🔥', condition: () => totalViews >= 10 },
+    { id: 'hundred_plays', name: 'Dedicated Player', desc: 'Play 100 games', icon: '💯', condition: () => totalViews >= 100 },
+    { id: 'hour_playtime', name: 'Time Flies', desc: 'Accumulate 1 hour of playtime', icon: '⏰', condition: () => getTotalPlayTime() >= 3600 },
+    { id: 'five_favorites', name: 'Collector', desc: 'Add 5 games to favorites', icon: '⭐', condition: () => favorites.length >= 5 },
+    { id: 'first_rating', name: 'Critic', desc: 'Rate your first game', icon: '🌟', condition: () => Object.keys(ratings).length >= 1 },
+    { id: 'three_comments', name: 'Chatterbox', desc: 'Leave 3 comments', icon: '💬', condition: () => getTotalComments() >= 3 },
+    { id: 'five_games', name: 'Curator', desc: 'Add 5 games to the hub', icon: '📚', condition: () => games.length >= 5 },
+    { id: 'fullscreen_master', name: 'Immersive', desc: 'Play 5 games in fullscreen', icon: '🖥️', condition: () => (achievements.fullscreenCount || 0) >= 5 },
+    { id: 'night_owl', name: 'Night Owl', desc: 'Play between 12AM-4AM', icon: '🦉', condition: () => { const h = new Date().getHours(); return h >= 0 && h < 4; } },
+];
+
+function getTotalPlayTime() {
+    return Object.values(playTimeData).reduce((a, b) => a + b, 0);
+}
+
+function getTotalComments() {
+    return Object.values(comments).reduce((a, b) => a + b.length, 0);
+}
+
+function checkAchievements() {
+    achievementDefs.forEach(ach => {
+        if (!achievements[ach.id] && ach.condition()) {
+            achievements[ach.id] = Date.now();
+            showAchievement(ach);
+            saveData("achievements", achievements);
+        }
+    });
+}
+
+function showAchievement(ach) {
+    const popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.innerHTML = `<span style="font-size: 30px;">${ach.icon}</span><div><strong>${ach.name}</strong><br><small>${ach.desc}</small></div>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 3000);
+    showToast(`🏆 Achievement unlocked: ${ach.name}!`);
+}
+
+/* ========== QOL 12: PROFILES ========== */
+function switchProfile() {
+    const profileNames = Object.keys(profiles);
+    const currentIndex = profileNames.indexOf(currentProfile);
+    const nextIndex = (currentIndex + 1) % profileNames.length;
+    if (nextIndex === currentIndex) {
+        const newName = prompt('Create new profile name:', 'Player ' + (profileNames.length + 1));
+        if (newName) {
+            profiles[newName] = { favorites: [], playTimeData: {}, personalBests: {}, ratings: {}, achievements: {} };
+            currentProfile = newName;
+        } else return;
+    } else {
+        currentProfile = profileNames[nextIndex];
+    }
+    loadProfile();
+    showToast(`👤 Switched to ${currentProfile}`);
+}
+
+function loadProfile() {
+    const profile = profiles[currentProfile] || { favorites: [], playTimeData: {}, personalBests: {}, ratings: {}, achievements: {} };
+    favorites = profile.favorites || [];
+    playTimeData = profile.playTimeData || {};
+    personalBests = profile.personalBests || {};
+    ratings = profile.ratings || {};
+    achievements = profile.achievements || {};
+    document.getElementById("profileName").innerText = currentProfile;
+    document.getElementById("profileAvatar").innerText = currentProfile[0]?.toUpperCase() || '👤';
+    saveAll();
+    render();
+}
+
+function saveProfile() {
+    profiles[currentProfile] = { favorites, playTimeData, personalBests, ratings, achievements };
+    saveData("profiles", profiles);
+}
+
+/* ========== QOL 13: PERFORMANCE MODE ========== */
+function togglePerformanceMode() {
+    performanceMode = !performanceMode;
+    document.body.classList.toggle('performance-mode', performanceMode);
+    document.getElementById('perfBtn').innerText = performanceMode ? '⚡ Normal Mode' : '⚡ Perf Mode';
+    saveData("performanceMode", performanceMode);
+    showToast(performanceMode ? '⚡ Performance mode ON' : '✨ Normal mode ON');
+}
+
+/* ========== QOL 6: KEYBOARD SHORTCUTS ========== */
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+        showToast('🔍 Search focused!');
+    }
+    if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        const hint = document.getElementById('shortcutsHint');
+        hint.classList.add('show');
+        hint.innerHTML = '<b>Ctrl+K</b> Search | <b>Ctrl+S</b> Stats | <b>Esc</b> Close | <b>Ctrl+P</b> Perf Mode';
+        setTimeout(() => hint.classList.remove('show'), 3000);
+    }
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        openStats();
+    }
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        togglePerformanceMode();
+    }
+    if (e.key === 'Escape') {
+        closeStats();
+        closeAdmin();
+        closeImportExport();
+        closeShare();
+        const frame = document.getElementById('frame');
+        if (frame.style.display === 'block') {
+            frame.style.display = 'none';
+            stopPlayTimer();
+            showToast('📴 Game closed');
+        }
+    }
+});
+
+/* ========== BACKGROUND SYSTEM ========== */
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let bgAnimationId;
+let currentBG = loadData("bg", "default");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawDefaultBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const time = Date.now() * 0.001;
+    for (let i = 0; i < 80; i++) {
+        const x = (Math.sin(time + i * 0.5) * 0.5 + 0.5) * canvas.width;
+        const y = (Math.cos(time * 0.7 + i * 0.3) * 0.5 + 0.5) * canvas.height;
+        const size = Math.random() * 2 + 1;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, ${150 + Math.random() * 105}, 255, ${0.3 + Math.random() * 0.4})`;
+        ctx.fill();
+    }
+    for (let i = 0; i < 3; i++) {
+        const radius = (time * 50 + i * 100) % 400;
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0, 170, 255, ${0.1 - radius / 4000})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+
+function animateBG() {
+    if (!performanceMode) {
+        switch (currentBG) {
+            case 'matrix': drawMatrixBG(); break;
+            case 'stars': drawStarsBG(); break;
+            default: drawDefaultBG();
+        }
+    }
+    bgAnimationId = requestAnimationFrame(animateBG);
+}
+
+function drawMatrixBG() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0f0';
+    ctx.font = '15px monospace';
+    for (let i = 0; i < 100; i++) {
+        ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), Math.random() * canvas.width, Math.random() * canvas.height);
+    }
+}
+
+function drawStarsBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < 200; i++) {
+        const twinkle = Math.sin(Date.now() * 0.003 + i) * 0.5 + 0.5;
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + twinkle * 0.7})`;
+        ctx.fill();
+    }
+}
+
+function changeBG() {
+    currentBG = document.getElementById("bgSelect").value;
+    const body = document.body;
+    const effects = document.getElementById("bgEffects");
+    body.style.background = "#050505";
+    switch (currentBG) {
+        case "matrix": body.style.background = "linear-gradient(180deg,#000,#001100)"; break;
+        case "stars": body.style.background = "radial-gradient(circle,#111,#000)"; break;
+        case "sunset": body.style.background = "linear-gradient(135deg,#ff5f6d,#ffc371)"; break;
+        case "purple": body.style.background = "linear-gradient(135deg,#0f001f,#3a005f)"; break;
+        case "ocean": body.style.background = "linear-gradient(180deg,#001f3f,#005577)"; break;
+        case "fire": body.style.background = "linear-gradient(180deg,#220000,#661100)"; break;
+        case "forest": body.style.background = "linear-gradient(180deg,#021,#041)"; break;
+        case "blood": body.style.background = "linear-gradient(180deg,#100,#400)"; break;
+        case "neon": body.style.background = "linear-gradient(135deg,#111,#000)"; break;
+    }
+    saveData("bg", currentBG);
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    const themes = {
+        default: { accent: '#00aaff', accent2: '#0066cc' },
+        purple: { accent: '#bb66ff', accent2: '#8844ff' },
+        green: { accent: '#00ff88', accent2: '#00aa55' },
+        orange: { accent: '#ff8800', accent2: '#ff6600' },
+        pink: { accent: '#ff4088', accent2: '#ff0088' },
+    };
+    const t = themes[theme];
+    root.style.setProperty('--accent', t.accent);
+    root.style.setProperty('--accent2', t.accent2);
+    document.querySelectorAll('.theme-preset').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    saveData("theme", theme);
+    showToast(`🎨 ${theme.charAt(0).toUpperCase() + theme.slice(1)} theme applied!`);
+}
+
+/* ========== AUTH ========== */
+function openLogin() { document.getElementById("loginOverlay").style.display = "flex"; }
+function login() {
+    const val = document.getElementById("pass").value;
+    if (adminPasswords.includes(val)) {
+        unlocked = true;
+        sessionStorage.setItem("admin", "true");
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("adminPanel").classList.add("active");
+        showToast("✅ Admin unlocked!");
+    } else { showToast("❌ Wrong password!", "error"); }
+}
+function toggleAdmin() {
+    if (!unlocked) { openLogin(); return; }
+    document.getElementById("adminPanel").classList.toggle("active");
+}
+function closeAdmin() { document.getElementById("adminPanel").classList.remove("active"); }
+
+/* ========== QOL 4: RECENTLY PLAYED ========== */
+function addToRecentlyPlayed(index) {
+    recentlyPlayed = recentlyPlayed.filter(i => i !== index);
+    recentlyPlayed.unshift(index);
+    if (recentlyPlayed.length > 10) recentlyPlayed.pop();
+    saveData("recentlyPlayed", recentlyPlayed);
+    updateRecentlyPlayed();
+}
+
+function updateRecentlyPlayed() {
+    const container = document.getElementById('recentList');
+    container.innerHTML = recentlyPlayed.map(i => {
+        if (games[i]) {
+            return `<span class="recent-game-chip" onclick="play(${i})">🎮 ${escapeHtml(games[i].title.substring(0, 15))}</span>`;
+        }
+        return '';
+    }).join('');
+}
+
+/* ========== QOL 3: SHARE ========== */
+function shareGame(index) {
+    document.getElementById('shareModal').style.display = 'flex';
+    const url = new URL(window.location);
+    url.searchParams.set('game', index);
+    document.getElementById('shareLink').value = url.toString();
+}
+
+function closeShare() { document.getElementById('shareModal').style.display = 'none'; }
+function copyShareLink() {
+    const input = document.getElementById('shareLink');
+    input.select();
+    document.execCommand('copy');
+    showToast('🔗 Link copied!');
+    closeShare();
+}
+
+/* ========== IMPORT/EXPORT ========== */
+function openImportExport() { document.getElementById("importExportModal").style.display = "flex"; generateExportCode(); }
+function closeImportExport() { document.getElementById("importExportModal").style.display = "none"; }
+function generateExportCode() {
+    const exportData = { version: "3.0", exportDate: new Date().toISOString(), games, playTimeData, personalBests, ratings, favorites, gameTags, comments };
+    document.getElementById("exportCode").value = btoa(encodeURIComponent(JSON.stringify(exportData)));
+}
+function copyExportCode() {
+    document.getElementById("exportCode").select();
+    document.execCommand("copy");
+    showToast("✅ Transfer code copied!");
+}
+async function importGames() {
+    const importCode = document.getElementById("importCode").value.trim();
+    const replaceExisting = document.getElementById("replaceExisting").checked;
+    if (!importCode) { showToast("❌ Paste a transfer code first!", "error"); return; }
+    try {
+        document.getElementById("loadingOverlay").style.display = "flex";
+        const jsonStr = decodeURIComponent(atob(importCode));
+        const importData = JSON.parse(jsonStr);
+        if (!importData.games) throw new Error("Invalid format");
+        if (replaceExisting) {
+            games = importData.games;
+            playTimeData = importData.playTimeData || {};
+            personalBests = importData.personalBests || {};
+            ratings = importData.ratings || {};
+            favorites = importData.favorites || [];
+            gameTags = importData.gameTags || {};
+            comments = importData.comments || {};
+        } else {
+            games = games.concat(importData.games);
+            Object.assign(playTimeData, importData.playTimeData || {});
+            Object.assign(personalBests, importData.personalBests || {});
+            Object.assign(ratings, importData.ratings || {});
+            favorites = [...new Set([...favorites, ...(importData.favorites || [])])];
+            Object.assign(gameTags, importData.gameTags || {});
+            Object.assign(comments, importData.comments || {});
+        }
+        autoSave();
+        render();
+        filterGames();
+        document.getElementById("loadingOverlay").style.display = "none";
+        showToast(`✅ Imported ${importData.games.length} games!`);
+    } catch (error) {
+        document.getElementById("loadingOverlay").style.display = "none";
+        showToast("❌ Invalid code", "error");
+    }
+}
+
+/* ========== FILE UPLOADS ========== */
+function uploadImageFile() {
+    const file = document.getElementById('imageFileInput').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                if (w > 800) { h = (h * 800) / w; w = 800; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                document.getElementById('image').value = canvas.toDataURL('image/jpeg', 0.7);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+function uploadHTMLFile() {
+    const file = document.getElementById('htmlFileInput').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) { document.getElementById('code').value = e.target.result; };
+        reader.readAsText(file);
+    }
+}
+
+/* ========== PLAY TIME ========== */
+function formatPlayTime(seconds) {
+    if (!seconds || seconds === 0) return '0min';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
+}
+
+let playStartTime = null, currentGameIndex = null, playTimeInterval = null;
+function startPlayTimer(gameIndex) {
+    stopPlayTimer();
+    currentGameIndex = gameIndex;
+    playStartTime = Date.now();
+    playTimeInterval = setInterval(() => {
+        if (currentGameIndex !== null && playStartTime) {
+            const key = `game_${gameIndex}`;
+            playTimeData[key] = (playTimeData[key] || 0) + 1;
+            if (!personalBests[key] || playTimeData[key] > personalBests[key]) personalBests[key] = playTimeData[key];
+            if (Math.floor(Date.now() / 5000) !== Math.floor((Date.now() - 1000) / 5000)) autoSave();
+        }
+    }, 1000);
+}
+function stopPlayTimer() {
+    if (playTimeInterval) { clearInterval(playTimeInterval); playTimeInterval = null; }
+    if (currentGameIndex !== null && playStartTime) {
+        const elapsed = Math.floor((Date.now() - playStartTime) / 1000);
+        const key = `game_${currentGameIndex}`;
+        playTimeData[key] = (playTimeData[key] || 0) + elapsed;
+        if (!personalBests[key] || playTimeData[key] > personalBests[key]) personalBests[key] = playTimeData[key];
+        autoSave();
+    }
+    currentGameIndex = null; playStartTime = null;
+}
+
+/* ========== QOL 8: FAVORITES ========== */
+function toggleFavorite(index, event) {
+    event.stopPropagation();
+    if (favorites.includes(index)) {
+        favorites = favorites.filter(f => f !== index);
+        showToast("💔 Removed from favorites");
+    } else {
+        favorites.push(index);
+        showToast("⭐ Added to favorites!");
+    }
+    saveProfile();
+    autoSave();
+    render();
+}
+
+/* ========== QOL 9: RATINGS ========== */
+function rateGame(index, rating, event) {
+    event.stopPropagation();
+    ratings[index] = rating;
+    saveProfile();
+    autoSave();
+    render();
+    checkAchievements();
+    showToast(`⭐ Rated ${rating} stars!`);
+}
+
+/* ========== QOL 11: COMMENTS ========== */
+function addComment(index, event) {
+    if (event.key === 'Enter') {
+        const input = event.target;
+        const text = input.value.trim();
+        if (text) {
+            if (!comments[index]) comments[index] = [];
+            comments[index].push({ text, date: Date.now(), profile: currentProfile });
+            input.value = '';
+            autoSave();
+            render();
+            checkAchievements();
+            showToast('💬 Comment added!');
+        }
+    }
+}
+
+/* ========== QOL 1: CATEGORY FILTERS ========== */
+let currentFilter = 'all';
+function filterByCategory(category, element) {
+    currentFilter = category;
+    document.querySelectorAll('.category-tag').forEach(tag => tag.classList.remove('active'));
+    element.classList.add('active');
+    filterGames();
+}
+function filterGames() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.card').forEach((card, i) => {
+        const gameIndex = parseInt(card.dataset.index);
+        const game = games[gameIndex];
+        if (!game) { card.style.display = 'none'; return; }
+        const title = game.title?.toLowerCase() || '';
+        const desc = game.desc?.toLowerCase() || '';
+        const tags = gameTags[gameIndex] || [];
+        const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+        let matchesFilter = true;
+        if (currentFilter === 'favorites') matchesFilter = favorites.includes(gameIndex);
+        else if (currentFilter === 'recent') matchesFilter = recentlyPlayed.includes(gameIndex);
+        else if (currentFilter === 'mostPlayed') {
+            const sorted = [...games].map((g, i) => ({ ...g, index: i })).sort((a, b) => (b.views || 0) - (a.views || 0));
+            matchesFilter = sorted.slice(0, 10).some(g => g.index === gameIndex);
+        } else if (['action', 'puzzle', 'strategy', 'racing'].includes(currentFilter)) {
+            matchesFilter = tags.map(t => t.toLowerCase()).includes(currentFilter);
+        }
+        card.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+    });
+}
+
+/* ========== QOL 10: STATS ========== */
+function openStats() {
+    document.getElementById('statsOverlay').classList.add('active');
+    document.getElementById('statsDashboard').classList.add('active');
+    updateStatsDisplay();
+}
+function closeStats() {
+    document.getElementById('statsOverlay').classList.remove('active');
+    document.getElementById('statsDashboard').classList.remove('active');
+}
+function updateStatsDisplay() {
+    document.getElementById('statTotalGames').innerText = games.length;
+    document.getElementById('statTotalPlays').innerText = totalViews;
+    document.getElementById('statTotalTime').innerText = formatPlayTime(getTotalPlayTime());
+    const mostPlayed = games.reduce((max, game) => (game.views || 0) > (max.views || 0) ? game : max, games[0]);
+    document.getElementById('statMostPlayed').innerText = mostPlayed ? mostPlayed.title : '-';
+    const allRatings = Object.values(ratings).filter(r => r > 0);
+    document.getElementById('statAvgRating').innerText = allRatings.length > 0 ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1) : '-';
+    document.getElementById('statAchievements').innerText = `${Object.keys(achievements).length}/10`;
+    document.getElementById('achievementList').innerHTML = achievementDefs.map(a => {
+        const unlocked = achievements[a.id];
+        return `<div style="padding:4px 0;">${unlocked ? '✅' : '🔒'} ${a.icon} ${a.name} - ${a.desc} ${unlocked ? '<small>(' + new Date(unlocked).toLocaleDateString() + ')</small>' : ''}</div>`;
+    }).join('');
+}
+
+/* ========== RENDER ========== */
+function render() {
+    let g = document.getElementById("games");
+    let a = document.getElementById("adminList");
+    let gamesHTML = '', adminHTML = '';
+    games.forEach((x, i) => {
+        const playTime = playTimeData[`game_${i}`] || 0;
+        const personalBest = personalBests[`game_${i}`] || 0;
+        const imageSrc = x.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" fill="%232a2a2a"%3E%3Crect width="400" height="200"/%3E%3Ctext x="50%25" y="50%25" fill="white" text-anchor="middle" dy=".3em" font-size="20"%3ENo Image%3C/text%3E%3C/svg%3E';
+        const isFav = favorites.includes(i);
+        const tags = gameTags[i] || [];
+        const gameComments = comments[i] || [];
+        gamesHTML += `
+        <div class="card" data-index="${i}">
+            <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${i}, event)">${isFav ? '❤️' : '🤍'}</button>
+            <img src="${imageSrc}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'200\\' fill=\\'%232a2a2a\\'%3E%3Crect width=\\'400\\' height=\\'200\\'/%3E%3C/svg%3E'">
+            <div class="info">
+                <h2>${escapeHtml(x.title)}</h2>
+                <div class="game-tags">${tags.map(t => `<span class="game-tag">${escapeHtml(t)}</span>`).join('')}</div>
+                <div class="rating">${[1,2,3,4,5].map(s => `<span class="star ${s <= (ratings[i] || 0) ? 'active' : ''}" onclick="rateGame(${i}, ${s}, event)">★</span>`).join('')}</div>
+                <div class="desc">${escapeHtml(x.desc || "")}</div>
+                <div class="playtime-display">⏱️ Play Time: ${formatPlayTime(playTime)}</div>
+                <div class="personal-best">🏆 Best Session: ${formatPlayTime(personalBest)}</div>
+                <button class="playBtn blue" onclick="play(${i})">PLAY</button>
+                <button class="playBtn green" onclick="fullscreenGame(${i})">FULLSCREEN</button>
+                <button class="playBtn purple" onclick="newTab(${i})">OPEN IN TAB</button>
+                <button class="playBtn orange" onclick="shareGame(${i})">🔗 SHARE</button>
+                <div class="comments-section">
+                    <div class="comment-list">${gameComments.slice(-3).map(c => `<div class="comment-item"><b>${escapeHtml(c.profile)}:</b> ${escapeHtml(c.text)}</div>`).join('')}</div>
+                    <input class="comment-input" placeholder="Add comment... (Enter)" onkeypress="addComment(${i}, event)">
+                </div>
+                <div class="meta"><span>Published: ${x.date || 'Unknown'}</span><span>👁️ ${x.views || 0}</span></div>
+            </div>
+        </div>`;
+        adminHTML += `
+        <div style="border-bottom:1px solid #333; padding-bottom:12px; margin-bottom:12px;">
+            <b>${escapeHtml(x.title)}</b><br>
+            Views: ${x.views} | Play Time: ${formatPlayTime(playTime)}<br>
+            Tags: ${tags.join(', ') || 'none'}<br><br>
+            <button onclick="startEdit(${i})" style="background:#ff8800; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; margin-right:5px;">Edit</button>
+            <button onclick="del(${i})" style="background:red; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">Delete</button>
+            <button onclick="resetPlayTime(${i})" style="background:#8844ff; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer; margin-left:5px;">Reset Stats</button>
+        </div>`;
+    });
+    g.innerHTML = gamesHTML;
+    a.innerHTML = adminHTML;
+    updateUI();
+    updateRecentlyPlayed();
+    updateStatsDisplay();
+}
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m] || m);
+}
+
+/* ========== EDIT/ADD/DELETE ========== */
+let editIndex = null;
+function startEdit(index) {
+    editIndex = index;
+    const game = games[index];
+    document.getElementById('title').value = game.title;
+    document.getElementById('image').value = game.image || '';
+    document.getElementById('desc').value = game.desc || '';
+    document.getElementById('code').value = game.code;
+    document.getElementById('tags').value = (gameTags[index] || []).join(', ');
+    const addBtn = document.querySelector('.adminPanel .addBtn');
+    addBtn.textContent = 'UPDATE GAME';
+    addBtn.style.background = '#ff8800';
+    addBtn.onclick = updateGame;
+    document.getElementById('adminPanel').scrollTop = 0;
+}
+function updateGame() {
+    if (editIndex === null) return;
+    games[editIndex] = {
+        ...games[editIndex],
+        title: document.getElementById('title').value,
+        image: document.getElementById('image').value,
+        desc: document.getElementById('desc').value,
+        code: document.getElementById('code').value,
+        updated: new Date().toLocaleString()
+    };
+    gameTags[editIndex] = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+    resetForm();
+    autoSave();
+    render();
+    filterGames();
+    showToast("✅ Game updated!");
+}
+function addGame() {
+    const titleVal = document.getElementById('title').value;
+    const codeVal = document.getElementById('code').value;
+    if (!titleVal || !codeVal) { showToast("❌ Title and Code required!", "error"); return; }
+    const index = games.length;
+    games.push({
+        title: titleVal, image: document.getElementById('image').value,
+        desc: document.getElementById('desc').value, code: codeVal,
+        views: 0, date: new Date().toLocaleDateString(), updated: new Date().toLocaleString()
+    });
+    gameTags[index] = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+    gameDates[index] = Date.now();
+    resetForm();
+    autoSave();
+    render();
+    showToast("✅ Game added!");
+    checkAchievements();
+}
+function resetForm() {
+    document.getElementById('title').value = '';
+    document.getElementById('image').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('tags').value = '';
+    const addBtn = document.querySelector('.adminPanel .addBtn');
+    addBtn.textContent = 'ADD GAME';
+    addBtn.style.background = '#00aa55';
+    addBtn.onclick = addGame;
+    editIndex = null;
+}
+function del(i) {
+    if (confirm(`Delete "${games[i].title}"?`)) {
+        delete playTimeData[`game_${i}`];
+        delete personalBests[`game_${i}`];
+        delete ratings[i];
+        delete gameTags[i];
+        delete comments[i];
+        favorites = favorites.filter(f => f !== i);
+        recentlyPlayed = recentlyPlayed.filter(r => r !== i);
+        games.splice(i, 1);
+        autoSave();
+        render();
+        filterGames();
+        showToast("🗑️ Game deleted");
+    }
+}
+function resetPlayTime(gameIndex) {
+    if (confirm(`Reset stats for "${games[gameIndex].title}"?`)) {
+        delete playTimeData[`game_${gameIndex}`];
+        delete personalBests[`game_${gameIndex}`];
+        autoSave();
+        render();
+        showToast("🔄 Stats reset");
+    }
+}
+
+/* ========== PLAY ========== */
+function play(i) {
+    games[i].views++;
+    totalViews++;
+    gameDates[i] = Date.now();
+    achievements.fullscreenCount = achievements.fullscreenCount || 0;
+    addToRecentlyPlayed(i);
+    autoSave();
+    const frame = document.getElementById('frame');
+    frame.style.display = "block";
+    frame.srcdoc = games[i].code;
+    frame.scrollIntoView({ behavior: "smooth", block: "start" });
+    startPlayTimer(i);
+    checkAchievements();
+}
+function fullscreenGame(i) {
+    games[i].views++;
+    totalViews++;
+    achievements.fullscreenCount = (achievements.fullscreenCount || 0) + 1;
+    addToRecentlyPlayed(i);
+    autoSave();
+    const frame = document.getElementById('frame');
+    frame.style.display = "block";
+    frame.srcdoc = games[i].code;
+    if (frame.requestFullscreen) frame.requestFullscreen();
+    startPlayTimer(i);
+    checkAchievements();
+}
+function newTab(i) {
+    const game = games[i];
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(game.title)}</title></head><body>${game.code}</body></html>`);
+    games[i].views++;
+    totalViews++;
+    addToRecentlyPlayed(i);
+    autoSave();
+    startPlayTimer(i);
+    checkAchievements();
+}
+
+/* ========== ADMINS ========== */
+function saveAdmins() {
+    const vals = document.getElementById("admins").value.split(",").map(v => v.trim()).filter(v => v);
+    adminPasswords = vals;
+    saveData("admins", vals);
+    showToast("✅ Admins saved");
+}
+
+/* ========== PARTICLES ========== */
+function toggleParticles() {
+    const enabled = document.getElementById("particlesToggle").checked;
+    document.querySelector(".particles").style.display = enabled ? "block" : "none";
+}
+
+/* ========== FPS COUNTER ========== */
+let fpsFrames = 0, fpsLastTime = performance.now();
+function updateFPS() {
+    fpsFrames++;
+    const now = performance.now();
+    if (now - fpsLastTime >= 1000) {
+        document.getElementById('fpsCounter').innerText = `FPS: ${fpsFrames}`;
+        document.getElementById('fpsCounter').style.display = performanceMode ? 'block' : 'none';
+        fpsFrames = 0;
+        fpsLastTime = now;
+    }
+    requestAnimationFrame(updateFPS);
+}
+
+/* ========== INIT ========== */
+const savedBG = loadData("bg", "default");
+document.getElementById("bgSelect").value = savedBG;
+currentBG = savedBG;
+changeBG();
+
+const savedTheme = loadData("theme", "default");
+if (savedTheme !== 'default') applyTheme(savedTheme);
+
+const p = document.querySelector(".particles");
+const fragment = document.createDocumentFragment();
+for (let i = 0; i < 150; i++) {
+    let s = document.createElement("span");
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = (Math.random() * 10 + 5) + "s";
+    s.style.animationDelay = Math.random() * 5 + "s";
+    fragment.appendChild(s);
+}
+p.appendChild(fragment);
+
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) stopPlayTimer();
+});
+const frameObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            if (document.getElementById('frame').style.display === 'none') stopPlayTimer();
+        }
+    });
+});
+frameObserver.observe(document.getElementById('frame'), { attributes: true });
+
+// Check for shared game
+const urlParams = new URLSearchParams(window.location.search);
+const sharedGame = urlParams.get('game');
+if (sharedGame !== null && games[parseInt(sharedGame)]) {
+    setTimeout(() => play(parseInt(sharedGame)), 500);
+}
+
+animateBG();
+updateFPS();
+render();
+loadProfile();
+checkAchievements();
+
+// Periodic auto-save
+setInterval(autoSave, 30000);
+</script>
+</body>
+</html>
