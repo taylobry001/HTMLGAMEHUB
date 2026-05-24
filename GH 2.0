@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Game Hub</title>
-
+<title>Ultimate Game Hub v2.0</title>
 <style>
 :root {
     --bg-primary: #050505;
@@ -331,13 +330,18 @@ header h1 {
 .card:hover::before { opacity: 1; }
 .card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 0 35px rgba(0, 170, 255, 0.35); border-color: rgba(0, 170, 255, 0.3); }
 
-.card img, .card iframe.yt-thumb {
+.card img, .card video, .card iframe.yt-thumb {
     width: 100%;
     height: 180px;
     object-fit: cover;
     background: #1a1a1a;
     border: none;
     pointer-events: none;
+}
+
+.card img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .info { padding: 15px; }
@@ -413,6 +417,32 @@ header h1 {
 }
 
 .leaderboard-entry:first-child { color: #ffd700; font-weight: bold; }
+
+/* === ACHIEVEMENTS === */
+.achievement-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    z-index: 10003;
+    animation: achievePop 0.5s ease-out, achieveFade 3s 2s forwards;
+    white-space: nowrap;
+}
+
+@keyframes achievePop {
+    0% { transform: translateX(-50%) scale(0); }
+    70% { transform: translateX(-50%) scale(1.2); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes achieveFade {
+    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
 
 /* === AI ASSISTANT === */
 .ai-assistant {
@@ -517,7 +547,7 @@ header h1 {
 }
 
 /* === MODALS === */
-.loginOverlay, .stats-overlay, .importExportModal, .ai-modal {
+.loginOverlay, .stats-overlay, .settings-overlay, .achievements-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.88);
@@ -528,7 +558,7 @@ header h1 {
     backdrop-filter: blur(10px);
 }
 
-.loginBox, .stats-dashboard, .importExportBox {
+.loginBox, .stats-dashboard, .settings-panel, .achievements-panel {
     background: #1d1d1d;
     padding: 25px;
     border-radius: 16px;
@@ -550,10 +580,9 @@ header h1 {
 .stat-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .stat-value { color: #00aaff; font-weight: bold; }
 
-.importExportBox { width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-.importExportBox textarea {
+.settings-panel { width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+.settings-panel textarea, .settings-panel select {
     width: 100%;
-    min-height: 100px;
     padding: 10px;
     border: none;
     border-radius: 10px;
@@ -562,7 +591,10 @@ header h1 {
     font-family: monospace;
     font-size: 12px;
     resize: vertical;
+    margin: 5px 0;
 }
+
+.achievements-panel { width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
 
 /* === ADMIN === */
 .adminPanel {
@@ -646,11 +678,11 @@ iframe#frame {
 <div class="ai-assistant">
     <div class="ai-chat" id="aiChat">
         <div class="ai-chat-header">
-            <span>🤖 Game Hub AI</span>
+            <span>🤖 Game Hub AI v2.0</span>
             <button onclick="toggleAI()" style="background:none;border:none;color:white;cursor:pointer;font-size:18px;">✕</button>
         </div>
         <div class="ai-messages" id="aiMessages">
-            <div class="ai-message bot">Hello! I'm your Game Hub assistant. Ask me to recommend games, find specific types, or help with anything!</div>
+            <div class="ai-message bot">Hello! I'm your enhanced Game Hub assistant v2.0. I can recommend games, generate mini-games, track achievements, and more!</div>
         </div>
         <div class="ai-input-area">
             <input id="aiInput" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter')sendAIMessage()">
@@ -681,25 +713,59 @@ iframe#frame {
     <div class="stat-item"><span>Total Play Time</span><span class="stat-value" id="statTotalTime">0min</span></div>
     <div class="stat-item"><span>Most Played</span><span class="stat-value" id="statMostPlayed">-</span></div>
     <div class="stat-item"><span>Avg Rating</span><span class="stat-value" id="statAvgRating">-</span></div>
+    <div class="stat-item"><span>Achievements Unlocked</span><span class="stat-value" id="statAchievements">0</span></div>
 </div>
 
-<!-- Import/Export -->
-<div class="importExportModal" id="importExportModal">
-    <div class="importExportBox">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-            <h2>📦 Import/Export</h2>
-            <button onclick="closeImportExport()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
+<!-- Settings -->
+<div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-panel" id="settingsPanelContent">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2>⚙️ Settings & QOL</h2>
+            <button onclick="closeSettings()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
         </div>
-        <textarea id="exportCode" readonly style="min-height:150px;"></textarea>
-        <button onclick="copyExportCode()" class="playBtn blue">📋 Copy</button>
-        <hr style="margin:15px 0;border-color:#333;">
-        <textarea id="importCode" placeholder="Paste code here..."></textarea>
-        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:12px;"><input type="checkbox" id="replaceExisting"> Replace existing</label>
+        <h3>🎨 Background Theme</h3>
+        <select id="bgSelect" onchange="changeBG()">
+            <option value="default">Default Cosmic</option>
+            <option value="matrix">Matrix Rain</option>
+            <option value="stars">Starry Night</option>
+            <option value="sunset">Sunset Glow</option>
+            <option value="purple">Purple Void</option>
+            <option value="ocean">Deep Ocean</option>
+            <option value="fire">Fire Storm</option>
+            <option value="grid">Cyber Grid</option>
+            <option value="forest">Mystic Forest</option>
+            <option value="blood">Blood Moon</option>
+            <option value="neon">Neon City</option>
+            <option value="aurora">Aurora Waves</option>
+            <option value="galaxy">Spiral Galaxy</option>
+            <option value="sunrise">Golden Sunrise</option>
+            <option value="arctic">Arctic Frost</option>
+        </select>
+        <br><br>
+        <h3>📦 Import/Export Data</h3>
+        <textarea id="exportCode" readonly style="min-height:100px;"></textarea>
+        <button onclick="copyExportCode()" class="playBtn blue">📋 Copy Export Code</button>
+        <textarea id="importCode" placeholder="Paste import code here..." style="min-height:100px;margin-top:10px;"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:12px;"><input type="checkbox" id="replaceExisting"> Replace existing data</label>
         <button onclick="importGames()" class="playBtn green">📥 Import</button>
+        <br><br>
+        <h3>🏆 Achievements</h3>
+        <button onclick="showAchievements()" class="playBtn orange">View Achievements</button>
     </div>
 </div>
 
-<header><h1>🎮 GAME HUB</h1></header>
+<!-- Achievements -->
+<div class="achievements-overlay" id="achievementsOverlay">
+    <div class="achievements-panel" id="achievementsPanelContent">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h2>🏆 Achievements</h2>
+            <button onclick="closeAchievements()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
+        </div>
+        <div id="achievementsList"></div>
+    </div>
+</div>
+
+<header><h1>🎮 GAME HUB 2.0</h1></header>
 
 <div class="topbar">
     <div class="search-area">
@@ -708,9 +774,9 @@ iframe#frame {
     </div>
     <div>Plays: <span id="totalViews">0</span> | Games: <span id="totalGames">0</span></div>
     <div style="display:flex;gap:10px;">
-        <button class="gear" onclick="openStats()">📊</button>
-        <button class="gear" onclick="openImportExport()">📦</button>
-        <button class="gear" onclick="toggleAdmin()">⚙️</button>
+        <button class="gear" onclick="openSettings()" title="Settings & QOL">⚙️</button>
+        <button class="gear" onclick="openStats()" title="Statistics">📊</button>
+        <button class="gear" onclick="toggleAdmin()" title="Admin Panel">🛡️</button>
     </div>
 </div>
 
@@ -732,118 +798,130 @@ iframe#frame {
 
 <div class="adminPanel" id="adminPanel">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2>⚙️ ADMIN</h2>
+        <h2>🛡️ ADMIN PANEL</h2>
         <button onclick="closeAdmin()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
     </div>
     <br>
     <input id="title" placeholder="Game Title">
-    <input id="image" placeholder="Image URL or YouTube URL">
+    <input id="image" placeholder="Image URL or MP4 thumbnail URL">
     <textarea id="desc" rows="3" placeholder="Description"></textarea>
     <input id="tags" placeholder="Tags (comma separated)">
     <select id="gameType" onchange="toggleCodeInput()">
         <option value="html">HTML Game</option>
         <option value="youtube">YouTube Video</option>
+        <option value="mp4">MP4 Video</option>
     </select>
-    <textarea id="code" rows="8" placeholder="FULL HTML GAME"></textarea>
+    <textarea id="code" rows="8" placeholder="FULL HTML GAME CODE"></textarea>
     <input id="youtubeUrl" placeholder="YouTube Video URL" style="display:none;">
+    <input id="mp4Url" placeholder="MP4 Video URL" style="display:none;">
     <div>
         <label class="file-label" onclick="document.getElementById('htmlFileInput').click()">📄 Upload HTML</label>
         <input type="file" id="htmlFileInput" accept=".html" style="display:none" onchange="uploadHTMLFile()">
+        <label class="file-label" onclick="document.getElementById('mp4FileInput').click()" style="margin-left:5px;">🎬 Upload MP4</label>
+        <input type="file" id="mp4FileInput" accept=".mp4" style="display:none" onchange="uploadMP4File()">
     </div>
-    <button class="addBtn" onclick="addGame()" style="background:#00aa55;">ADD GAME</button>
-    <br><br>
-    <h3>🎨 Backgrounds</h3>
-    <select id="bgSelect" onchange="changeBG()">
-        <option value="default">Default Cosmic</option>
-        <option value="matrix">Matrix Rain</option>
-        <option value="stars">Starry Night</option>
-        <option value="sunset">Sunset Glow</option>
-        <option value="purple">Purple Void</option>
-        <option value="ocean">Deep Ocean</option>
-        <option value="fire">Fire Storm</option>
-        <option value="grid">Cyber Grid</option>
-        <option value="forest">Mystic Forest</option>
-        <option value="blood">Blood Moon</option>
-        <option value="neon">Neon City</option>
-    </select>
+    <button class="addBtn" id="addGameBtn" onclick="addGame()" style="background:#00aa55;">ADD GAME</button>
     <br><br>
     <h3>🏷️ Custom Categories</h3>
     <div id="customCategoriesList"></div>
     <input id="newCategoryName" placeholder="New category name">
     <button onclick="createCustomCategory()" class="addBtn" style="background:#8844ff;">CREATE CATEGORY</button>
     <br><br>
-    <input id="admins" placeholder="Admin Passwords">
+    <input id="admins" placeholder="Admin Passwords (comma separated)">
     <button class="addBtn" onclick="saveAdmins()" style="background:#8844ff;">SAVE ADMINS</button>
     <br><br>
-    <h3>Games</h3>
+    <h3>Games List</h3>
     <div id="adminList"></div>
 </div>
 
 <script>
 // ========== DATA MANAGEMENT ==========
-function setCookie(n, v, d = 365) {
-    const date = new Date();
+function setCookie(n, v, d) {
+    d = d || 365;
+    var date = new Date();
     date.setTime(date.getTime() + (d * 86400000));
     document.cookie = n + "=" + encodeURIComponent(v) + ";path=/;expires=" + date.toUTCString();
 }
+
 function getCookie(n) {
-    const m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
+    var m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
     return m ? decodeURIComponent(m[2]) : null;
 }
+
 function saveData(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); setCookie('gh_' + k, JSON.stringify(v)); }
-    catch(e) { setCookie('gh_' + k, JSON.stringify(v)); }
+    try {
+        localStorage.setItem(k, JSON.stringify(v));
+        setCookie('gh_' + k, JSON.stringify(v));
+    } catch(e) {
+        setCookie('gh_' + k, JSON.stringify(v));
+    }
 }
+
 function loadData(k, d) {
     try {
-        const l = localStorage.getItem(k);
+        var l = localStorage.getItem(k);
         if (l) return JSON.parse(l);
-        const c = getCookie('gh_' + k);
-        if (c) { localStorage.setItem(k, c); return JSON.parse(c); }
+        var c = getCookie('gh_' + k);
+        if (c) {
+            localStorage.setItem(k, c);
+            return JSON.parse(c);
+        }
     } catch(e) {}
     return d;
 }
 
 // ========== STATE ==========
-let adminPasswords = loadData("admins", ["1234"]);
-let unlocked = sessionStorage.getItem("admin") === "true";
-let games = loadData("games", []);
-let totalViews = parseInt(loadData("totalViews", 0));
-let playTimeData = loadData("playTimeData", {});
-let personalBests = loadData("personalBests", {});
-let ratings = loadData("ratings", {});
-let favorites = loadData("favorites", []);
-let gameTags = loadData("gameTags", {});
-let comments = loadData("comments", {});
-let recentlyPlayed = loadData("recentlyPlayed", []);
-let updatedGames = loadData("updatedGames", []);
-let gameLeaderboards = loadData("gameLeaderboards", {});
-let customCategories = loadData("customCategories", ["Action", "Puzzle", "Strategy", "Racing"]);
-let gameTypes = loadData("gameTypes", {});
+var adminPasswords = loadData("admins", ["1234"]);
+var unlocked = sessionStorage.getItem("admin") === "true";
+var games = loadData("games", []);
+var totalViews = parseInt(loadData("totalViews", 0));
+var playTimeData = loadData("playTimeData", {});
+var personalBests = loadData("personalBests", {});
+var ratings = loadData("ratings", {});
+var favorites = loadData("favorites", []);
+var gameTags = loadData("gameTags", {});
+var comments = loadData("comments", {});
+var recentlyPlayed = loadData("recentlyPlayed", []);
+var updatedGames = loadData("updatedGames", []);
+var gameLeaderboards = loadData("gameLeaderboards", {});
+var customCategories = loadData("customCategories", ["Action", "Puzzle", "Strategy", "Racing"]);
+var gameTypes = loadData("gameTypes", {});
+var achievements = loadData("achievements", {
+    firstPlay: false,
+    tenPlays: false,
+    favoriteFive: false,
+    ratingMaster: false,
+    playTime1h: false,
+    gameCollector: false,
+    miniGameCreator: false
+});
 
 document.getElementById("totalViews").innerText = totalViews;
 document.getElementById("totalGames").innerText = games.length;
 document.getElementById("admins").value = adminPasswords.join(",");
 
-// ========== BACKGROUND SYSTEM (ALL ORIGINAL BGS) ==========
-const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
-let bgAnimationId;
-let currentBG = loadData("bg", "default");
+// ========== BACKGROUND SYSTEM (EXPANDED) ==========
+var canvas = document.getElementById('bgCanvas');
+var ctx = canvas.getContext('2d');
+var bgAnimationId;
+var currentBG = loadData("bg", "default");
 
-function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 function drawDefaultBG() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const t = Date.now() * 0.001;
-    for (let i = 0; i < 80; i++) {
-        const x = (Math.sin(t + i * 0.5) * 0.5 + 0.5) * canvas.width;
-        const y = (Math.cos(t * 0.7 + i * 0.3) * 0.5 + 0.5) * canvas.height;
+    var t = Date.now() * 0.001;
+    for (var i = 0; i < 80; i++) {
+        var x = (Math.sin(t + i * 0.5) * 0.5 + 0.5) * canvas.width;
+        var y = (Math.cos(t * 0.7 + i * 0.3) * 0.5 + 0.5) * canvas.height;
         ctx.beginPath();
         ctx.arc(x, y, Math.random() * 2 + 1, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, ${150 + Math.random() * 105}, 255, ${0.3 + Math.random() * 0.4})`;
+        ctx.fillStyle = 'rgba(0, ' + (150 + Math.random() * 105) + ', 255, ' + (0.3 + Math.random() * 0.4) + ')';
         ctx.fill();
     }
 }
@@ -853,16 +931,58 @@ function drawMatrixBG() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#0f0';
     ctx.font = '14px monospace';
-    for (let i = 0; i < 80; i++) ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), Math.random() * canvas.width, Math.random() * canvas.height);
+    for (var i = 0; i < 80; i++) {
+        ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), Math.random() * canvas.width, Math.random() * canvas.height);
+    }
 }
 
 function drawStarsBG() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < 150; i++) {
-        const tw = Math.sin(Date.now() * 0.003 + i) * 0.5 + 0.5;
+    for (var i = 0; i < 150; i++) {
+        var tw = Math.sin(Date.now() * 0.003 + i) * 0.5 + 0.5;
         ctx.beginPath();
         ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${0.3 + tw * 0.7})`;
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + tw * 0.7) + ')';
+        ctx.fill();
+    }
+}
+
+function drawAuroraBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grad.addColorStop(0, 'rgba(0, 255, 150, ' + (0.2 + Math.sin(Date.now() * 0.001) * 0.1) + ')');
+    grad.addColorStop(0.5, 'rgba(100, 0, 255, 0.2)');
+    grad.addColorStop(1, 'rgba(0, 200, 255, 0.2)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawGalaxyBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < 200; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 200, 255, ' + Math.random() * 0.5 + ')';
+        ctx.fill();
+    }
+}
+
+function drawSunriseBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, '#ff6b35');
+    grad.addColorStop(0.5, '#f7c59f');
+    grad.addColorStop(1, '#2c3e50');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawArcticBG() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < 120; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200, 230, 255, ' + Math.random() * 0.6 + ')';
         ctx.fill();
     }
 }
@@ -871,6 +991,10 @@ function animateBG() {
     switch(currentBG) {
         case 'matrix': drawMatrixBG(); break;
         case 'stars': drawStarsBG(); break;
+        case 'aurora': drawAuroraBG(); break;
+        case 'galaxy': drawGalaxyBG(); break;
+        case 'sunrise': drawSunriseBG(); break;
+        case 'arctic': drawArcticBG(); break;
         default: drawDefaultBG();
     }
     bgAnimationId = requestAnimationFrame(animateBG);
@@ -878,7 +1002,7 @@ function animateBG() {
 
 function changeBG() {
     currentBG = document.getElementById("bgSelect").value;
-    const body = document.body;
+    var body = document.body;
     body.style.background = "#050505";
     switch(currentBG) {
         case "matrix": body.style.background = "linear-gradient(180deg,#000,#001100)"; break;
@@ -890,88 +1014,162 @@ function changeBG() {
         case "forest": body.style.background = "linear-gradient(180deg,#021,#041)"; break;
         case "blood": body.style.background = "linear-gradient(180deg,#100,#400)"; break;
         case "neon": body.style.background = "linear-gradient(135deg,#111,#000)"; break;
+        case "aurora": body.style.background = "linear-gradient(135deg,#0a1a2a,#1a0a2a)"; break;
+        case "galaxy": body.style.background = "radial-gradient(circle,#1a0033,#000)"; break;
+        case "sunrise": body.style.background = "linear-gradient(180deg,#ff6b35,#2c3e50)"; break;
+        case "arctic": body.style.background = "linear-gradient(180deg,#e0f0ff,#b0d0ff)"; break;
     }
     saveData("bg", currentBG);
 }
 
+// ========== ACHIEVEMENT SYSTEM (v2.0 FEATURE) ==========
+function checkAchievements() {
+    var newAchievements = [];
+    
+    if (!achievements.firstPlay && totalViews >= 1) {
+        achievements.firstPlay = true;
+        newAchievements.push("🎮 First Play!");
+    }
+    if (!achievements.tenPlays && totalViews >= 10) {
+        achievements.tenPlays = true;
+        newAchievements.push("🔥 10 Plays Milestone!");
+    }
+    if (!achievements.favoriteFive && favorites.length >= 5) {
+        achievements.favoriteFive = true;
+        newAchievements.push("⭐ Collector: 5 Favorites!");
+    }
+    if (!achievements.ratingMaster && Object.keys(ratings).length >= 5) {
+        achievements.ratingMaster = true;
+        newAchievements.push("⭐ Rating Master!");
+    }
+    var totalTime = 0;
+    for (var key in playTimeData) {
+        totalTime += playTimeData[key];
+    }
+    if (!achievements.playTime1h && totalTime >= 3600) {
+        achievements.playTime1h = true;
+        newAchievements.push("⏱️ 1 Hour Playtime!");
+    }
+    if (!achievements.gameCollector && games.length >= 10) {
+        achievements.gameCollector = true;
+        newAchievements.push("🎯 Game Collector: 10 Games!");
+    }
+    
+    for (var i = 0; i < newAchievements.length; i++) {
+        showAchievementPopup(newAchievements[i]);
+    }
+    if (newAchievements.length > 0) {
+        saveData('achievements', achievements);
+    }
+}
+
+function showAchievementPopup(text) {
+    var popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    popup.textContent = text;
+    document.body.appendChild(popup);
+    setTimeout(function() { popup.remove(); }, 5000);
+}
+
+function showAchievements() {
+    document.getElementById('achievementsOverlay').style.display = 'flex';
+    var list = document.getElementById('achievementsList');
+    var allAchievements = [
+        { key: 'firstPlay', name: 'First Play', desc: 'Play your first game', icon: '🎮' },
+        { key: 'tenPlays', name: '10 Plays', desc: 'Play games 10 times', icon: '🔥' },
+        { key: 'favoriteFive', name: 'Collector', desc: 'Favorite 5 games', icon: '⭐' },
+        { key: 'ratingMaster', name: 'Rating Master', desc: 'Rate 5 games', icon: '⭐' },
+        { key: 'playTime1h', name: 'Dedicated', desc: 'Play for 1 hour total', icon: '⏱️' },
+        { key: 'gameCollector', name: 'Game Collector', desc: 'Have 10 games in hub', icon: '🎯' },
+        { key: 'miniGameCreator', name: 'Mini-Game Creator', desc: 'Generate a mini-game with AI', icon: '🤖' }
+    ];
+    var html = '';
+    for (var i = 0; i < allAchievements.length; i++) {
+        var a = allAchievements[i];
+        var unlocked = achievements[a.key];
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;margin:5px 0;' + (unlocked ? 'border:1px solid #ffd700;' : 'opacity:0.5;') + '">';
+        html += '<span style="font-size:24px;">' + a.icon + '</span>';
+        html += '<div><b>' + a.name + '</b><br><small>' + a.desc + '</small></div>';
+        html += '<span style="margin-left:auto;">' + (unlocked ? '✅' : '🔒') + '</span>';
+        html += '</div>';
+    }
+    list.innerHTML = html;
+}
+
+function closeAchievements() {
+    document.getElementById('achievementsOverlay').style.display = 'none';
+}
+
 // ========== CUSTOM CATEGORIES ==========
 function renderCategories() {
-    const container = document.getElementById('categoryFilters');
-    container.innerHTML = `
-        <span class="category-tag active" onclick="filterByCategory('all', this)">🎯 All</span>
-        <span class="category-tag" onclick="filterByCategory('favorites', this)">⭐ Favorites</span>
-        <span class="category-tag" onclick="filterByCategory('recent', this)">🕐 Recent</span>
-        <span class="category-tag" onclick="filterByCategory('mostPlayed', this)">🔥 Popular</span>
-        ${customCategories.map(cat => `
-            <span class="category-tag" onclick="filterByCategory('${cat.toLowerCase()}', this)">
-                ${cat}
-                <button class="delete-category-btn" onclick="event.stopPropagation(); deleteCategory('${cat}')">✕</button>
-            </span>
-        `).join('')}
-        <span class="add-category-btn" onclick="addCustomCategory()">➕ Add</span>
-    `;
+    var container = document.getElementById('categoryFilters');
+    var html = '<span class="category-tag active" onclick="filterByCategory(\'all\', this)">🎯 All</span>';
+    html += '<span class="category-tag" onclick="filterByCategory(\'favorites\', this)">⭐ Favorites</span>';
+    html += '<span class="category-tag" onclick="filterByCategory(\'recent\', this)">🕐 Recent</span>';
+    html += '<span class="category-tag" onclick="filterByCategory(\'mostPlayed\', this)">🔥 Popular</span>';
+    for (var i = 0; i < customCategories.length; i++) {
+        var cat = customCategories[i];
+        html += '<span class="category-tag" onclick="filterByCategory(\'' + cat.toLowerCase() + '\', this)">' + cat + ' <button class="delete-category-btn" onclick="event.stopPropagation(); deleteCategory(\'' + cat + '\')">✕</button></span>';
+    }
+    html += '<span class="add-category-btn" onclick="addCustomCategory()">➕ Add</span>';
+    container.innerHTML = html;
 }
 
 function addCustomCategory() {
-    const name = prompt('Enter new category name:');
-    if (name && !customCategories.includes(name)) {
+    var name = prompt('Enter new category name:');
+    if (name && customCategories.indexOf(name) === -1) {
         customCategories.push(name);
         saveData('customCategories', customCategories);
         renderCategories();
-        showToast(`✅ Category "${name}" created!`);
+        showToast('✅ Category "' + name + '" created!');
     }
 }
 
 function createCustomCategory() {
-    const name = document.getElementById('newCategoryName').value.trim();
-    if (name && !customCategories.includes(name)) {
+    var name = document.getElementById('newCategoryName').value.trim();
+    if (name && customCategories.indexOf(name) === -1) {
         customCategories.push(name);
         document.getElementById('newCategoryName').value = '';
         saveData('customCategories', customCategories);
         renderCategories();
-        showToast(`✅ Category "${name}" created!`);
+        showToast('✅ Category "' + name + '" created!');
     }
 }
 
 function deleteCategory(name) {
-    if (confirm(`Delete category "${name}"?`)) {
-        customCategories = customCategories.filter(c => c !== name);
+    if (confirm('Delete category "' + name + '"?')) {
+        customCategories = customCategories.filter(function(c) { return c !== name; });
         saveData('customCategories', customCategories);
         renderCategories();
         filterGames();
-        showToast(`🗑️ Category "${name}" deleted`);
+        showToast('🗑️ Category "' + name + '" deleted');
     }
 }
 
-// ========== YOUTUBE SUPPORT ==========
+// ========== YOUTUBE & MP4 SUPPORT ==========
 function toggleCodeInput() {
-    const type = document.getElementById('gameType').value;
+    var type = document.getElementById('gameType').value;
     document.getElementById('code').style.display = type === 'html' ? 'block' : 'none';
     document.getElementById('youtubeUrl').style.display = type === 'youtube' ? 'block' : 'none';
+    document.getElementById('mp4Url').style.display = type === 'mp4' ? 'block' : 'none';
 }
 
 function getYouTubeID(url) {
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
+    var match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
     return match ? match[1] : null;
 }
 
 // ========== ADAPTIVE LEADERBOARD ==========
 function updateGameLeaderboard(gameIndex, playTime) {
     if (!gameLeaderboards[gameIndex]) gameLeaderboards[gameIndex] = [];
-    const lb = gameLeaderboards[gameIndex];
-    
-    // Add new entry
+    var lb = gameLeaderboards[gameIndex];
     lb.push({
         time: playTime,
         date: new Date().toISOString(),
-        profile: currentProfile || 'Player'
+        profile: 'Player'
     });
-    
-    // Sort by time (highest first for play time leaderboard)
-    lb.sort((a, b) => b.time - a.time);
-    
-    // Keep top 10
-    if (lb.length > 10) lb = lb.slice(0, 10);
+    lb.sort(function(a, b) { return b.time - a.time; });
+    if (lb.length > 10) lb.length = 10;
     gameLeaderboards[gameIndex] = lb;
     saveData('gameLeaderboards', gameLeaderboards);
 }
@@ -981,47 +1179,43 @@ function getGameLeaderboard(gameIndex) {
 }
 
 // ========== IMPROVED TIMER ==========
-let playStartTime = null;
-let currentGameIndex = null;
-let playTimeInterval = null;
-let accumulatedTime = 0;
+var playStartTime = null;
+var currentGameIndex = null;
+var playTimeInterval = null;
+var accumulatedTime = 0;
 
 function startPlayTimer(gameIndex) {
     stopPlayTimer();
     currentGameIndex = gameIndex;
     playStartTime = Date.now();
-    accumulatedTime = playTimeData[`game_${gameIndex}`] || 0;
-    
-    playTimeInterval = setInterval(() => {
+    accumulatedTime = playTimeData['game_' + gameIndex] || 0;
+    playTimeInterval = setInterval(function() {
         if (currentGameIndex !== null && playStartTime) {
-            const elapsed = Math.floor((Date.now() - playStartTime) / 1000);
-            const total = accumulatedTime + elapsed;
-            playTimeData[`game_${currentGameIndex}`] = total;
-            
-            // Update personal best
-            if (!personalBests[`game_${currentGameIndex}`] || total > personalBests[`game_${currentGameIndex}`]) {
-                personalBests[`game_${currentGameIndex}`] = total;
+            var elapsed = Math.floor((Date.now() - playStartTime) / 1000);
+            var total = accumulatedTime + elapsed;
+            playTimeData['game_' + currentGameIndex] = total;
+            if (!personalBests['game_' + currentGameIndex] || total > personalBests['game_' + currentGameIndex]) {
+                personalBests['game_' + currentGameIndex] = total;
             }
-            
-            // Update leaderboard every 10 seconds
             if (elapsed % 10 === 0 && elapsed > 0) {
                 updateGameLeaderboard(currentGameIndex, total);
             }
-            
-            // Save every 5 seconds
             if (elapsed % 5 === 0) saveAll();
         }
     }, 1000);
 }
 
 function stopPlayTimer() {
-    if (playTimeInterval) { clearInterval(playTimeInterval); playTimeInterval = null; }
+    if (playTimeInterval) {
+        clearInterval(playTimeInterval);
+        playTimeInterval = null;
+    }
     if (currentGameIndex !== null && playStartTime) {
-        const elapsed = Math.floor((Date.now() - playStartTime) / 1000);
-        const total = accumulatedTime + elapsed;
-        playTimeData[`game_${currentGameIndex}`] = total;
-        if (!personalBests[`game_${currentGameIndex}`] || total > personalBests[`game_${currentGameIndex}`]) {
-            personalBests[`game_${currentGameIndex}`] = total;
+        var elapsed = Math.floor((Date.now() - playStartTime) / 1000);
+        var total = accumulatedTime + elapsed;
+        playTimeData['game_' + currentGameIndex] = total;
+        if (!personalBests['game_' + currentGameIndex] || total > personalBests['game_' + currentGameIndex]) {
+            personalBests['game_' + currentGameIndex] = total;
         }
         updateGameLeaderboard(currentGameIndex, total);
         saveAll();
@@ -1031,67 +1225,99 @@ function stopPlayTimer() {
     accumulatedTime = 0;
 }
 
-// ========== AI ASSISTANT ==========
+// ========== AI ASSISTANT (ENHANCED) ==========
 function toggleAI() {
     document.getElementById('aiChat').classList.toggle('active');
 }
 
 function sendAIMessage() {
-    const input = document.getElementById('aiInput');
-    const msg = input.value.trim();
+    var input = document.getElementById('aiInput');
+    var msg = input.value.trim();
     if (!msg) return;
-    
-    const messages = document.getElementById('aiMessages');
-    messages.innerHTML += `<div class="ai-message user">${escapeHtml(msg)}</div>`;
+    var messages = document.getElementById('aiMessages');
+    messages.innerHTML += '<div class="ai-message user">' + escapeHtml(msg) + '</div>';
     input.value = '';
     messages.scrollTop = messages.scrollHeight;
-    
-    // AI response
-    setTimeout(() => {
-        const response = generateAIResponse(msg);
-        messages.innerHTML += `<div class="ai-message bot">${response}</div>`;
+    setTimeout(function() {
+        var response = generateAIResponse(msg);
+        messages.innerHTML += '<div class="ai-message bot">' + response + '</div>';
         messages.scrollTop = messages.scrollHeight;
     }, 500);
 }
 
 function generateAIResponse(msg) {
-    const lower = msg.toLowerCase();
+    var lower = msg.toLowerCase();
     
-    if (lower.includes('recommend') || lower.includes('suggest')) {
-        const topRated = games
-            .map((g, i) => ({ ...g, index: i, rating: ratings[i] || 0 }))
-            .sort((a, b) => b.rating - a.rating)
-            .slice(0, 3);
+    if (lower.indexOf('mini game') !== -1 || lower.indexOf('generate game') !== -1 || lower.indexOf('create game') !== -1) {
+        achievements.miniGameCreator = true;
+        saveData('achievements', achievements);
+        checkAchievements();
+        return '🎮 Here\'s a mini-game idea! Try this "Speed Clicker": Count clicks in 10 seconds. I can even generate the HTML code for you! Just ask "generate speed clicker code".';
+    }
+    
+    if (lower.indexOf('speed clicker code') !== -1 || lower.indexOf('clicker html') !== -1) {
+        return 'Here\'s a Speed Clicker HTML game:<br><textarea style="width:100%;height:100px;background:#1a1a1a;color:#0f0;border:1px solid #333;padding:5px;font-size:10px;" readonly>&lt;button onclick="clicks++" style="font-size:50px;padding:30px;"&gt;Click!&lt;/button&gt;&lt;p id="score"&gt;0&lt;/p&gt;&lt;script&gt;let clicks=0;setInterval(()=&gt;{document.getElementById(\'score\').innerText=clicks},100);setTimeout(()=&gt;{alert(\'Final: \'+clicks)},10000);&lt;/script&gt;</textarea><br>Copy this into the admin panel as an HTML game!';
+    }
+    
+    if (lower.indexOf('recommend') !== -1 || lower.indexOf('suggest') !== -1) {
+        var topRated = games.map(function(g, i) {
+            return { title: g.title, rating: ratings[i] || 0 };
+        }).sort(function(a, b) { return b.rating - a.rating; }).slice(0, 3);
         if (topRated.length > 0) {
-            return `I recommend: ${topRated.map(g => `🎮 ${g.title} (${'★'.repeat(g.rating)})`).join(', ')}`;
+            var recs = '';
+            for (var i = 0; i < topRated.length; i++) {
+                recs += '🎮 ' + topRated[i].title + ' (';
+                for (var j = 0; j < topRated[i].rating; j++) recs += '★';
+                recs += ')';
+                if (i < topRated.length - 1) recs += ', ';
+            }
+            return 'I recommend: ' + recs;
         }
         return "Try adding some games first! Then I can give better recommendations.";
     }
     
-    if (lower.includes('popular') || lower.includes('most played')) {
-        const popular = [...games].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3);
-        if (popular.length > 0) return `Most played: ${popular.map(g => `🎮 ${g.title} (${g.views || 0} plays)`).join(', ')}`;
+    if (lower.indexOf('popular') !== -1 || lower.indexOf('most played') !== -1) {
+        var popular = games.slice().sort(function(a, b) { return (b.views || 0) - (a.views || 0); }).slice(0, 3);
+        if (popular.length > 0) {
+            var popList = '';
+            for (var i = 0; i < popular.length; i++) {
+                popList += '🎮 ' + popular[i].title + ' (' + (popular[i].views || 0) + ' plays)';
+                if (i < popular.length - 1) popList += ', ';
+            }
+            return 'Most played: ' + popList;
+        }
         return "No games played yet!";
     }
     
-    if (lower.includes('category') || lower.includes('categories')) {
-        return `Available categories: ${customCategories.join(', ')}. You can also create custom categories!`;
+    if (lower.indexOf('category') !== -1 || lower.indexOf('categories') !== -1) {
+        return 'Available categories: ' + customCategories.join(', ') + '. You can also create custom categories!';
     }
     
-    if (lower.includes('total') || lower.includes('stats')) {
-        return `📊 Stats: ${games.length} games, ${totalViews} total plays, ${formatPlayTime(Object.values(playTimeData).reduce((a,b)=>a+b,0))} total play time.`;
+    if (lower.indexOf('achievement') !== -1) {
+        var unlocked = 0;
+        for (var key in achievements) {
+            if (achievements[key]) unlocked++;
+        }
+        return '🏆 You\'ve unlocked ' + unlocked + '/7 achievements! Type "show achievements" to see them.';
     }
     
-    if (lower.includes('help') || lower.includes('what can you do')) {
-        return "I can: 🎮 Recommend games, 📊 Show stats, 🔍 Find games by category, 💡 Give tips, and more! Just ask!";
+    if (lower.indexOf('total') !== -1 || lower.indexOf('stats') !== -1) {
+        var totalTime = 0;
+        for (var key in playTimeData) totalTime += playTimeData[key];
+        return '📊 Stats: ' + games.length + ' games, ' + totalViews + ' total plays, ' + formatPlayTime(totalTime) + ' total play time.';
     }
     
-    const responses = [
+    if (lower.indexOf('help') !== -1 || lower.indexOf('what can you do') !== -1) {
+        return "I can: 🎮 Recommend games, 🤖 Generate mini-games, 📊 Show stats, 🔍 Find games by category, 💡 Give tips, 🏆 Track achievements, and more!";
+    }
+    
+    var responses = [
         "That's interesting! Try searching for games using the search bar or category filters.",
         "I'm here to help! Ask me to find games, show stats, or give recommendations.",
         "Did you know? You can create custom categories and add YouTube videos!",
         "Tip: Use keyboard shortcuts! Ctrl+K to search, Ctrl+S for stats.",
-        "You can rate games and build a leaderboard for each game!"
+        "You can rate games and build a leaderboard for each game!",
+        "Try asking me to generate a mini-game idea!"
     ];
     
     return responses[Math.floor(Math.random() * responses.length)];
@@ -1100,25 +1326,26 @@ function generateAIResponse(msg) {
 // ========== UTILS ==========
 function formatPlayTime(s) {
     if (!s) return '0min';
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    return h > 0 ? `${h}h ${m}min` : `${m}min`;
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    return h > 0 ? h + 'h ' + m + 'min' : m + 'min';
 }
 
 function escapeHtml(s) {
     if (!s) return '';
-    return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m] || m);
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function showToast(msg, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+function showToast(msg, type) {
+    type = type || 'success';
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + type;
     toast.textContent = msg;
     container.appendChild(toast);
-    setTimeout(() => {
+    setTimeout(function() {
         toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(function() { toast.remove(); }, 300);
     }, 3000);
 }
 
@@ -1136,8 +1363,10 @@ function saveAll() {
     saveData("gameLeaderboards", gameLeaderboards);
     saveData("customCategories", customCategories);
     saveData("gameTypes", gameTypes);
+    saveData("achievements", achievements);
     document.getElementById("totalGames").innerText = games.length;
     document.getElementById("totalViews").innerText = totalViews;
+    checkAchievements();
 }
 
 // ========== KEYBOARD SHORTCUTS ==========
@@ -1145,21 +1374,23 @@ document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
     if (e.ctrlKey && e.key === 's') { e.preventDefault(); openStats(); }
     if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); toggleAdmin(); }
-    if (e.ctrlKey && e.key === 'e') { e.preventDefault(); openImportExport(); }
-    if (e.key === 'Escape') { closeStats(); closeAdmin(); closeImportExport(); }
+    if (e.ctrlKey && e.key === 'e') { e.preventDefault(); openSettings(); }
+    if (e.key === 'Escape') { closeStats(); closeAdmin(); closeSettings(); closeAchievements(); }
 });
 
 // ========== AUTH ==========
 function openLogin() { document.getElementById("loginOverlay").style.display = "flex"; }
 function login() {
-    const val = document.getElementById("pass").value;
-    if (adminPasswords.includes(val)) {
+    var val = document.getElementById("pass").value;
+    if (adminPasswords.indexOf(val) !== -1) {
         unlocked = true;
         sessionStorage.setItem("admin", "true");
         document.getElementById("loginOverlay").style.display = "none";
         document.getElementById("adminPanel").classList.add("active");
         showToast("✅ Admin unlocked!");
-    } else { showToast("❌ Wrong password!", "error"); }
+    } else {
+        showToast("❌ Wrong password!", "error");
+    }
 }
 function toggleAdmin() {
     if (!unlocked) { openLogin(); return; }
@@ -1167,41 +1398,37 @@ function toggleAdmin() {
 }
 function closeAdmin() { document.getElementById("adminPanel").classList.remove("active"); }
 
-// ========== STATS ==========
-function openStats() {
-    document.getElementById('statsOverlay').style.display = 'flex';
-    document.getElementById('statsDashboard').style.display = 'block';
-    document.getElementById('statTotalGames').innerText = games.length;
-    document.getElementById('statTotalPlays').innerText = totalViews;
-    document.getElementById('statTotalTime').innerText = formatPlayTime(Object.values(playTimeData).reduce((a,b)=>a+b,0));
-    const mp = games.reduce((max, g) => (g.views || 0) > (max.views || 0) ? g : max, games[0]);
-    document.getElementById('statMostPlayed').innerText = mp ? mp.title : '-';
-    const allR = Object.values(ratings).filter(r => r > 0);
-    document.getElementById('statAvgRating').innerText = allR.length ? (allR.reduce((a,b)=>a+b,0)/allR.length).toFixed(1) : '-';
-}
-function closeStats() {
-    document.getElementById('statsOverlay').style.display = 'none';
-    document.getElementById('statsDashboard').style.display = 'none';
-}
-
-// ========== IMPORT/EXPORT ==========
-function openImportExport() { document.getElementById("importExportModal").style.display = "flex"; generateExportCode(); }
-function closeImportExport() { document.getElementById("importExportModal").style.display = "none"; }
-function generateExportCode() {
-    document.getElementById("exportCode").value = btoa(encodeURIComponent(JSON.stringify({
-        games, playTimeData, personalBests, ratings, favorites, gameTags, comments, gameLeaderboards, customCategories, gameTypes
+// ========== SETTINGS ==========
+function openSettings() {
+    document.getElementById('settingsOverlay').style.display = 'flex';
+    document.getElementById('exportCode').value = btoa(encodeURIComponent(JSON.stringify({
+        games: games,
+        playTimeData: playTimeData,
+        personalBests: personalBests,
+        ratings: ratings,
+        favorites: favorites,
+        gameTags: gameTags,
+        comments: comments,
+        gameLeaderboards: gameLeaderboards,
+        customCategories: customCategories,
+        gameTypes: gameTypes,
+        achievements: achievements
     })));
 }
+
+function closeSettings() { document.getElementById('settingsOverlay').style.display = 'none'; }
+
 function copyExportCode() {
-    document.getElementById("exportCode").select();
+    document.getElementById('exportCode').select();
     document.execCommand("copy");
     showToast("✅ Copied!");
 }
-async function importGames() {
-    const code = document.getElementById("importCode").value.trim();
+
+function importGames() {
+    var code = document.getElementById("importCode").value.trim();
     if (!code) { showToast("❌ Paste code first!", "error"); return; }
     try {
-        const data = JSON.parse(decodeURIComponent(atob(code)));
+        var data = JSON.parse(decodeURIComponent(atob(code)));
         if (document.getElementById("replaceExisting").checked) {
             games = data.games || [];
             playTimeData = data.playTimeData || {};
@@ -1213,133 +1440,195 @@ async function importGames() {
             gameLeaderboards = data.gameLeaderboards || {};
             customCategories = data.customCategories || [];
             gameTypes = data.gameTypes || {};
+            achievements = data.achievements || achievements;
         } else {
             games = games.concat(data.games || []);
             Object.assign(playTimeData, data.playTimeData || {});
             Object.assign(personalBests, data.personalBests || {});
             Object.assign(ratings, data.ratings || {});
-            favorites = [...new Set([...favorites, ...(data.favorites || [])])];
+            favorites = favorites.concat(data.favorites || []);
+            favorites = favorites.filter(function(item, pos) { return favorites.indexOf(item) === pos; });
             Object.assign(gameTags, data.gameTags || {});
             Object.assign(comments, data.comments || {});
             Object.assign(gameLeaderboards, data.gameLeaderboards || {});
-            customCategories = [...new Set([...customCategories, ...(data.customCategories || [])])];
+            customCategories = customCategories.concat(data.customCategories || []);
+            customCategories = customCategories.filter(function(item, pos) { return customCategories.indexOf(item) === pos; });
             Object.assign(gameTypes, data.gameTypes || {});
+            if (data.achievements) Object.assign(achievements, data.achievements);
         }
         saveAll();
         render();
         renderCategories();
         filterGames();
-        showToast(`✅ Imported!`);
-    } catch(e) { showToast("❌ Invalid code", "error"); }
+        showToast("✅ Imported!");
+    } catch(e) {
+        showToast("❌ Invalid code", "error");
+    }
+}
+
+// ========== STATS ==========
+function openStats() {
+    document.getElementById('statsOverlay').style.display = 'flex';
+    document.getElementById('statsDashboard').style.display = 'block';
+    document.getElementById('statTotalGames').innerText = games.length;
+    document.getElementById('statTotalPlays').innerText = totalViews;
+    var totalTime = 0;
+    for (var key in playTimeData) totalTime += playTimeData[key];
+    document.getElementById('statTotalTime').innerText = formatPlayTime(totalTime);
+    var mp = games.reduce(function(max, g) { return (g.views || 0) > (max.views || 0) ? g : max; }, games[0]);
+    document.getElementById('statMostPlayed').innerText = mp ? mp.title : '-';
+    var allR = [];
+    for (var key in ratings) { if (ratings[key] > 0) allR.push(ratings[key]); }
+    document.getElementById('statAvgRating').innerText = allR.length ? (allR.reduce(function(a,b){return a+b;},0)/allR.length).toFixed(1) : '-';
+    var achUnlocked = 0;
+    for (var key in achievements) { if (achievements[key]) achUnlocked++; }
+    document.getElementById('statAchievements').innerText = achUnlocked;
+}
+
+function closeStats() {
+    document.getElementById('statsOverlay').style.display = 'none';
+    document.getElementById('statsDashboard').style.display = 'none';
 }
 
 // ========== FILTERS ==========
-let currentFilter = 'all';
+var currentFilter = 'all';
+
 function filterByCategory(cat, el) {
     currentFilter = cat;
-    document.querySelectorAll('.category-tag').forEach(t => t.classList.remove('active'));
+    var tags = document.querySelectorAll('.category-tag');
+    for (var i = 0; i < tags.length; i++) {
+        tags[i].classList.remove('active');
+    }
     if (el) el.classList.add('active');
     filterGames();
 }
+
 function filterGames() {
-    const term = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.card').forEach(card => {
-        const idx = parseInt(card.dataset.index);
-        const g = games[idx];
-        if (!g) { card.style.display = 'none'; return; }
-        const tags = gameTags[idx] || [];
-        const matchSearch = (g.title || '').toLowerCase().includes(term) || (g.desc || '').toLowerCase().includes(term) || tags.some(t => t.toLowerCase().includes(term));
-        let matchFilter = true;
-        if (currentFilter === 'favorites') matchFilter = favorites.includes(idx);
-        else if (currentFilter === 'recent') matchFilter = recentlyPlayed.includes(idx);
-        else if (currentFilter === 'mostPlayed') matchFilter = [...games].sort((a,b) => (b.views||0)-(a.views||0)).slice(0,10).includes(g);
-        else if (currentFilter !== 'all') matchFilter = tags.map(t => t.toLowerCase()).includes(currentFilter.toLowerCase());
+    var term = document.getElementById('searchInput').value.toLowerCase();
+    var cards = document.querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var idx = parseInt(card.dataset.index);
+        var g = games[idx];
+        if (!g) { card.style.display = 'none'; continue; }
+        var tags = gameTags[idx] || [];
+        var matchSearch = (g.title || '').toLowerCase().indexOf(term) !== -1 || 
+                         (g.desc || '').toLowerCase().indexOf(term) !== -1 || 
+                         tags.some(function(t) { return t.toLowerCase().indexOf(term) !== -1; });
+        var matchFilter = true;
+        if (currentFilter === 'favorites') matchFilter = favorites.indexOf(idx) !== -1;
+        else if (currentFilter === 'recent') matchFilter = recentlyPlayed.indexOf(idx) !== -1;
+        else if (currentFilter === 'mostPlayed') {
+            var sorted = games.slice().sort(function(a,b){ return (b.views||0)-(a.views||0); }).slice(0,10);
+            matchFilter = sorted.indexOf(g) !== -1;
+        }
+        else if (currentFilter !== 'all') matchFilter = tags.map(function(t){ return t.toLowerCase(); }).indexOf(currentFilter.toLowerCase()) !== -1;
         card.style.display = matchSearch && matchFilter ? 'block' : 'none';
-    });
+    }
 }
 
 function addToRecentlyPlayed(i) {
-    recentlyPlayed = recentlyPlayed.filter(r => r !== i);
+    recentlyPlayed = recentlyPlayed.filter(function(r) { return r !== i; });
     recentlyPlayed.unshift(i);
     if (recentlyPlayed.length > 10) recentlyPlayed.pop();
     saveData('recentlyPlayed', recentlyPlayed);
     updateRecentlyPlayed();
 }
+
 function updateRecentlyPlayed() {
-    document.getElementById('recentList').innerHTML = recentlyPlayed.map(i => {
-        if (games[i]) return `<span class="recent-game-chip" onclick="play(${i})">🎮 ${escapeHtml(games[i].title.substring(0,15))}</span>`;
-        return '';
-    }).join('');
+    var html = '';
+    for (var i = 0; i < recentlyPlayed.length; i++) {
+        var idx = recentlyPlayed[i];
+        if (games[idx]) {
+            html += '<span class="recent-game-chip" onclick="play(' + idx + ')">🎮 ' + escapeHtml(games[idx].title.substring(0,15)) + '</span>';
+        }
+    }
+    document.getElementById('recentList').innerHTML = html;
 }
 
 // ========== FAVORITES & RATINGS ==========
 function toggleFavorite(i, event) {
     event.stopPropagation();
-    if (favorites.includes(i)) favorites = favorites.filter(f => f !== i);
-    else favorites.push(i);
-    saveAll(); render(); filterGames();
+    if (favorites.indexOf(i) !== -1) {
+        favorites = favorites.filter(function(f) { return f !== i; });
+    } else {
+        favorites.push(i);
+    }
+    saveAll();
+    render();
+    filterGames();
 }
+
 function rateGame(i, r, event) {
     event.stopPropagation();
     ratings[i] = r;
-    saveAll(); render();
+    saveAll();
+    render();
 }
 
 // ========== RENDER ==========
 function render() {
-    let g = document.getElementById("games");
-    let a = document.getElementById("adminList");
-    let html = '', adminHTML = '';
+    var g = document.getElementById("games");
+    var a = document.getElementById("adminList");
+    var html = '';
+    var adminHTML = '';
 
-    games.forEach((x, i) => {
-        const pt = playTimeData[`game_${i}`] || 0;
-        const pb = personalBests[`game_${i}`] || 0;
-        const isFav = favorites.includes(i);
-        const tags = gameTags[i] || [];
-        const updated = updatedGames.includes(i);
-        const lb = getGameLeaderboard(i);
-        const type = gameTypes[i] || 'html';
+    for (var i = 0; i < games.length; i++) {
+        var x = games[i];
+        var pt = playTimeData['game_' + i] || 0;
+        var pb = personalBests['game_' + i] || 0;
+        var isFav = favorites.indexOf(i) !== -1;
+        var tags = gameTags[i] || [];
+        var updated = updatedGames.indexOf(i) !== -1;
+        var lb = getGameLeaderboard(i);
+        var type = gameTypes[i] || 'html';
         
-        let thumbHTML = '';
+        var thumbHTML = '';
         if (type === 'youtube' && x.youtubeId) {
-            thumbHTML = `<iframe class="yt-thumb" src="https://www.youtube.com/embed/${x.youtubeId}?controls=0&showinfo=0&autohide=1" style="pointer-events:none;"></iframe>`;
+            thumbHTML = '<iframe class="yt-thumb" src="https://www.youtube.com/embed/' + x.youtubeId + '?controls=0&showinfo=0&autohide=1" style="pointer-events:none;"></iframe>';
+        } else if (type === 'mp4' && x.mp4Url) {
+            thumbHTML = '<video src="' + x.mp4Url + '" muted loop playsinline style="pointer-events:none;"></video>';
         } else {
-            thumbHTML = `<img src="${x.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22white%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3C/svg%3E'">`;
+            thumbHTML = '<img src="' + (x.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22white%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E') + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3C/svg%3E\'">';
         }
 
-        html += `
-        <div class="card ${updated ? 'updated' : ''}" data-index="${i}">
-            ${updated ? '<div class="update-badge">🆕 UPDATED</div>' : ''}
-            <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${i}, event)">${isFav ? '❤️' : '🤍'}</button>
-            ${thumbHTML}
-            <div class="info">
-                <h2>${escapeHtml(x.title)}</h2>
-                <div class="game-tags">${tags.map(t => `<span class="game-tag">${escapeHtml(t)}</span>`).join('')}</div>
-                <div class="rating">${[1,2,3,4,5].map(s => `<span class="star ${s <= (ratings[i] || 0) ? 'active' : ''}" onclick="rateGame(${i}, ${s}, event)">★</span>`).join('')}</div>
-                <div class="desc">${escapeHtml(x.desc || "")}</div>
-                <div style="background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:8px;padding:8px;margin-top:8px;font-size:12px;color:#00aaff;">
-                    ⏱️ ${formatPlayTime(pt)} | 🏆 Best: ${formatPlayTime(pb)}
-                </div>
-                ${lb.length > 0 ? `
-                <div class="leaderboard-section">
-                    🏅 Leaderboard:
-                    ${lb.map((e, i) => `<div class="leaderboard-entry"><span>${i+1}. ${escapeHtml(e.profile || 'Player')}</span><span>${formatPlayTime(e.time)}</span></div>`).join('')}
-                </div>` : ''}
-                <button class="playBtn blue" onclick="play(${i})">${type === 'youtube' ? '▶️ WATCH' : 'PLAY'}</button>
-                <button class="playBtn green" onclick="fullscreenGame(${i})">FULLSCREEN</button>
-                <button class="playBtn purple" onclick="newTab(${i})">NEW TAB</button>
-                <div class="meta"><span>📅 ${x.date || '?'}</span><span>👁️ ${x.views || 0}</span></div>
-            </div>
-        </div>`;
+        html += '<div class="card' + (updated ? ' updated' : '') + '" data-index="' + i + '">';
+        if (updated) html += '<div class="update-badge">🆕 UPDATED</div>';
+        html += '<button class="favorite-btn' + (isFav ? ' active' : '') + '" onclick="toggleFavorite(' + i + ', event)">' + (isFav ? '❤️' : '🤍') + '</button>';
+        html += thumbHTML;
+        html += '<div class="info">';
+        html += '<h2>' + escapeHtml(x.title) + '</h2>';
+        html += '<div class="game-tags">';
+        for (var j = 0; j < tags.length; j++) {
+            html += '<span class="game-tag">' + escapeHtml(tags[j]) + '</span>';
+        }
+        html += '</div>';
+        html += '<div class="rating">';
+        for (var s = 1; s <= 5; s++) {
+            html += '<span class="star' + (s <= (ratings[i] || 0) ? ' active' : '') + '" onclick="rateGame(' + i + ', ' + s + ', event)">★</span>';
+        }
+        html += '</div>';
+        html += '<div class="desc">' + escapeHtml(x.desc || "") + '</div>';
+        html += '<div style="background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:8px;padding:8px;margin-top:8px;font-size:12px;color:#00aaff;">⏱️ ' + formatPlayTime(pt) + ' | 🏆 Best: ' + formatPlayTime(pb) + '</div>';
+        if (lb.length > 0) {
+            html += '<div class="leaderboard-section">🏅 Leaderboard:';
+            for (var k = 0; k < lb.length; k++) {
+                html += '<div class="leaderboard-entry"><span>' + (k+1) + '. ' + escapeHtml(lb[k].profile || 'Player') + '</span><span>' + formatPlayTime(lb[k].time) + '</span></div>';
+            }
+            html += '</div>';
+        }
+        html += '<button class="playBtn blue" onclick="play(' + i + ')">' + (type === 'youtube' || type === 'mp4' ? '▶️ WATCH' : 'PLAY') + '</button>';
+        html += '<button class="playBtn green" onclick="fullscreenGame(' + i + ')">FULLSCREEN</button>';
+        html += '<button class="playBtn purple" onclick="newTab(' + i + ')">NEW TAB</button>';
+        html += '<div class="meta"><span>📅 ' + (x.date || '?') + '</span><span>👁️ ' + (x.views || 0) + '</span></div>';
+        html += '</div></div>';
 
-        adminHTML += `
-        <div style="border-bottom:1px solid #333;padding:8px 0;">
-            <b>${escapeHtml(x.title)}</b> (${type}) | 👁️ ${x.views}<br>
-            <button onclick="startEdit(${i})" style="background:#ff8800;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Edit</button>
-            <button onclick="del(${i})" style="background:red;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Del</button>
-            <button onclick="updatedGames.push(${i}); saveAll(); render();" style="background:#00aaff;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">🆕 Mark Updated</button>
-        </div>`;
-    });
+        adminHTML += '<div style="border-bottom:1px solid #333;padding:8px 0;"><b>' + escapeHtml(x.title) + '</b> (' + type + ') | 👁️ ' + (x.views || 0) + '<br>';
+        adminHTML += '<button onclick="startEdit(' + i + ')" style="background:#ff8800;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Edit</button>';
+        adminHTML += '<button onclick="del(' + i + ')" style="background:red;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Del</button>';
+        adminHTML += '<button onclick="updatedGames.push(' + i + '); saveAll(); render();" style="background:#00aaff;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">🆕 Mark Updated</button>';
+        adminHTML += '</div>';
+    }
 
     g.innerHTML = html;
     a.innerHTML = adminHTML;
@@ -1349,10 +1638,11 @@ function render() {
 }
 
 // ========== GAME ACTIONS ==========
-let editIndex = null;
+var editIndex = null;
+
 function startEdit(i) {
     editIndex = i;
-    const g = games[i];
+    var g = games[i];
     document.getElementById('title').value = g.title;
     document.getElementById('image').value = g.image || '';
     document.getElementById('desc').value = g.desc || '';
@@ -1361,13 +1651,20 @@ function startEdit(i) {
     if (gameTypes[i] === 'youtube') {
         document.getElementById('code').style.display = 'none';
         document.getElementById('youtubeUrl').style.display = 'block';
+        document.getElementById('mp4Url').style.display = 'none';
         document.getElementById('youtubeUrl').value = g.youtubeUrl || '';
+    } else if (gameTypes[i] === 'mp4') {
+        document.getElementById('code').style.display = 'none';
+        document.getElementById('youtubeUrl').style.display = 'none';
+        document.getElementById('mp4Url').style.display = 'block';
+        document.getElementById('mp4Url').value = g.mp4Url || '';
     } else {
         document.getElementById('code').style.display = 'block';
         document.getElementById('youtubeUrl').style.display = 'none';
+        document.getElementById('mp4Url').style.display = 'none';
         document.getElementById('code').value = g.code || '';
     }
-    const btn = document.querySelector('.adminPanel .addBtn');
+    var btn = document.getElementById('addGameBtn');
     btn.textContent = 'UPDATE GAME';
     btn.style.background = '#ff8800';
     btn.onclick = updateGame;
@@ -1375,60 +1672,76 @@ function startEdit(i) {
 
 function updateGame() {
     if (editIndex === null) return;
-    const type = document.getElementById('gameType').value;
+    var type = document.getElementById('gameType').value;
     games[editIndex] = {
-        ...games[editIndex],
         title: document.getElementById('title').value,
         image: document.getElementById('image').value,
         desc: document.getElementById('desc').value,
-        code: type === 'html' ? document.getElementById('code').value : '',
+        code: type === 'html' ? document.getElementById('code').value : (games[editIndex].code || ''),
         youtubeId: type === 'youtube' ? getYouTubeID(document.getElementById('youtubeUrl').value) : null,
         youtubeUrl: type === 'youtube' ? document.getElementById('youtubeUrl').value : '',
+        mp4Url: type === 'mp4' ? document.getElementById('mp4Url').value : '',
+        views: games[editIndex].views || 0,
+        date: games[editIndex].date || new Date().toLocaleDateString(),
         updated: new Date().toLocaleString()
     };
-    gameTags[editIndex] = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+    gameTags[editIndex] = document.getElementById('tags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
     gameTypes[editIndex] = type;
     updatedGames.push(editIndex);
     resetForm();
-    saveAll(); render(); filterGames();
+    saveAll();
+    render();
+    filterGames();
     showToast("✅ Game updated!");
 }
 
 function addGame() {
-    const title = document.getElementById('title').value;
-    const type = document.getElementById('gameType').value;
-    const code = type === 'html' ? document.getElementById('code').value : '';
-    const ytId = type === 'youtube' ? getYouTubeID(document.getElementById('youtubeUrl').value) : null;
+    var title = document.getElementById('title').value;
+    var type = document.getElementById('gameType').value;
+    var code = type === 'html' ? document.getElementById('code').value : '';
+    var ytId = type === 'youtube' ? getYouTubeID(document.getElementById('youtubeUrl').value) : null;
+    var mp4Url = type === 'mp4' ? document.getElementById('mp4Url').value : '';
     
-    if (!title || (type === 'html' && !code) || (type === 'youtube' && !ytId)) {
-        showToast("❌ Fill all required fields!", "error"); return;
+    if (!title || (type === 'html' && !code) || (type === 'youtube' && !ytId) || (type === 'mp4' && !mp4Url)) {
+        showToast("❌ Fill all required fields!", "error");
+        return;
     }
     
-    const idx = games.length;
+    var idx = games.length;
     games.push({
-        title, image: document.getElementById('image').value,
+        title: title,
+        image: document.getElementById('image').value,
         desc: document.getElementById('desc').value,
-        code, youtubeId: ytId,
+        code: code,
+        youtubeId: ytId,
         youtubeUrl: type === 'youtube' ? document.getElementById('youtubeUrl').value : '',
-        views: 0, date: new Date().toLocaleDateString(), updated: new Date().toLocaleString()
+        mp4Url: mp4Url,
+        views: 0,
+        date: new Date().toLocaleDateString(),
+        updated: new Date().toLocaleString()
     });
-    gameTags[idx] = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+    gameTags[idx] = document.getElementById('tags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
     gameTypes[idx] = type;
     updatedGames.push(idx);
     resetForm();
-    saveAll(); render();
+    saveAll();
+    render();
     showToast("✅ Game added!");
 }
 
 function resetForm() {
-    ['title','image','desc','code','tags','youtubeUrl'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
+    document.getElementById('title').value = '';
+    document.getElementById('image').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('tags').value = '';
+    document.getElementById('youtubeUrl').value = '';
+    document.getElementById('mp4Url').value = '';
     document.getElementById('gameType').value = 'html';
     document.getElementById('code').style.display = 'block';
     document.getElementById('youtubeUrl').style.display = 'none';
-    const btn = document.querySelector('.adminPanel .addBtn');
+    document.getElementById('mp4Url').style.display = 'none';
+    var btn = document.getElementById('addGameBtn');
     btn.textContent = 'ADD GAME';
     btn.style.background = '#00aa55';
     btn.onclick = addGame;
@@ -1436,31 +1749,36 @@ function resetForm() {
 }
 
 function del(i) {
-    if (confirm(`Delete "${games[i].title}"?`)) {
-        delete playTimeData[`game_${i}`];
-        delete personalBests[`game_${i}`];
+    if (confirm('Delete "' + games[i].title + '"?')) {
+        delete playTimeData['game_' + i];
+        delete personalBests['game_' + i];
         delete ratings[i];
         delete gameTags[i];
         delete comments[i];
         delete gameLeaderboards[i];
         delete gameTypes[i];
-        favorites = favorites.filter(f => f !== i);
+        favorites = favorites.filter(function(f) { return f !== i; });
         games.splice(i, 1);
-        saveAll(); render(); filterGames();
+        saveAll();
+        render();
+        filterGames();
     }
 }
 
 function play(i) {
-    games[i].views++; totalViews++;
+    games[i].views = (games[i].views || 0) + 1;
+    totalViews++;
     addToRecentlyPlayed(i);
-    updatedGames = updatedGames.filter(u => u !== i);
+    updatedGames = updatedGames.filter(function(u) { return u !== i; });
     
-    const type = gameTypes[i] || 'html';
-    const frame = document.getElementById('frame');
+    var type = gameTypes[i] || 'html';
+    var frame = document.getElementById('frame');
     frame.style.display = 'block';
     
     if (type === 'youtube' && games[i].youtubeId) {
-        frame.srcdoc = `<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000;}iframe{width:100%;height:100%;border:none;}</style></head><body><iframe src="https://www.youtube.com/embed/${games[i].youtubeId}?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe></body></html>`;
+        frame.srcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000;}iframe{width:100%;height:100%;border:none;}</style></head><body><iframe src="https://www.youtube.com/embed/' + games[i].youtubeId + '?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe></body></html>';
+    } else if (type === 'mp4' && games[i].mp4Url) {
+        frame.srcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000;}video{width:100%;height:100%;}</style></head><body><video src="' + games[i].mp4Url + '" controls autoplay style="width:100%;height:100%;"></video></body></html>';
     } else {
         frame.srcdoc = games[i].code;
     }
@@ -1472,52 +1790,77 @@ function play(i) {
 
 function fullscreenGame(i) {
     play(i);
-    const frame = document.getElementById('frame');
+    var frame = document.getElementById('frame');
     if (frame.requestFullscreen) frame.requestFullscreen();
 }
 
 function newTab(i) {
-    games[i].views++; totalViews++;
+    games[i].views = (games[i].views || 0) + 1;
+    totalViews++;
     addToRecentlyPlayed(i);
-    updatedGames = updatedGames.filter(u => u !== i);
+    updatedGames = updatedGames.filter(function(u) { return u !== i; });
     saveAll();
     
-    const type = gameTypes[i] || 'html';
+    var type = gameTypes[i] || 'html';
     if (type === 'youtube' && games[i].youtubeId) {
-        window.open(`https://www.youtube.com/watch?v=${games[i].youtubeId}`, '_blank');
+        window.open('https://www.youtube.com/watch?v=' + games[i].youtubeId, '_blank');
+    } else if (type === 'mp4' && games[i].mp4Url) {
+        window.open(games[i].mp4Url, '_blank');
     } else {
-        const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(games[i].title)}</title></head><body>${games[i].code}</body></html>`);
+        var win = window.open('', '_blank');
+        win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(games[i].title) + '</title></head><body>' + games[i].code + '</body></html>');
     }
     startPlayTimer(i);
 }
 
 function saveAdmins() {
-    adminPasswords = document.getElementById("admins").value.split(",").map(v => v.trim()).filter(v => v);
+    adminPasswords = document.getElementById("admins").value.split(",").map(function(v) { return v.trim(); }).filter(function(v) { return v; });
     saveData("admins", adminPasswords);
     showToast("✅ Admins saved");
 }
 
 function uploadHTMLFile() {
-    const file = document.getElementById('htmlFileInput').files[0];
+    var file = document.getElementById('htmlFileInput').files[0];
     if (file) {
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function(e) { document.getElementById('code').value = e.target.result; };
         reader.readAsText(file);
     }
 }
 
+function uploadMP4File() {
+    var file = document.getElementById('mp4FileInput').files[0];
+    if (file) {
+        var url = URL.createObjectURL(file);
+        document.getElementById('mp4Url').value = url;
+        showToast("✅ MP4 loaded (local URL)");
+    }
+}
+
+function updateAdminCategories() {
+    var list = document.getElementById('customCategoriesList');
+    if (list) {
+        var html = '';
+        for (var i = 0; i < customCategories.length; i++) {
+            var c = customCategories[i];
+            html += '<span style="display:inline-block;background:rgba(0,170,255,0.1);padding:4px 10px;border-radius:10px;margin:2px;font-size:12px;">' + c + ' <button onclick="deleteCategory(\'' + c + '\');updateAdminCategories();" style="background:none;border:none;color:red;cursor:pointer;">✕</button></span>';
+        }
+        list.innerHTML = html;
+    }
+}
+
 // ========== INIT ==========
-const savedBG = loadData("bg", "default");
-document.getElementById("bgSelect").value = savedBG;
+var savedBG = loadData("bg", "default");
+var bgSelect = document.getElementById("bgSelect");
+if (bgSelect) bgSelect.value = savedBG;
 currentBG = savedBG;
 changeBG();
 
 // Particles
-const p = document.querySelector(".particles");
-const frag = document.createDocumentFragment();
-for (let i = 0; i < 150; i++) {
-    let s = document.createElement("span");
+var p = document.querySelector(".particles");
+var frag = document.createDocumentFragment();
+for (var i = 0; i < 150; i++) {
+    var s = document.createElement("span");
     s.style.left = Math.random() * 100 + "vw";
     s.style.animationDuration = (Math.random() * 10 + 5) + "s";
     s.style.animationDelay = Math.random() * 5 + "s";
@@ -1525,12 +1868,12 @@ for (let i = 0; i < 150; i++) {
 }
 p.appendChild(frag);
 
-document.addEventListener('fullscreenchange', () => {
+document.addEventListener('fullscreenchange', function() {
     if (!document.fullscreenElement) stopPlayTimer();
 });
 
-const frameObserver = new MutationObserver((mutations) => {
-    mutations.forEach(m => {
+var frameObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
         if (m.type === 'attributes' && m.attributeName === 'style') {
             if (document.getElementById('frame').style.display === 'none') stopPlayTimer();
         }
@@ -1541,16 +1884,22 @@ frameObserver.observe(document.getElementById('frame'), { attributes: true });
 animateBG();
 render();
 renderCategories();
-
-// Update custom categories list in admin
-function updateAdminCategories() {
-    document.getElementById('customCategoriesList').innerHTML = customCategories.map(c => 
-        `<span style="display:inline-block;background:rgba(0,170,255,0.1);padding:4px 10px;border-radius:10px;margin:2px;font-size:12px;">${c} <button onclick="deleteCategory('${c}');updateAdminCategories();" style="background:none;border:none;color:red;cursor:pointer;">✕</button></span>`
-    ).join('');
-}
 updateAdminCategories();
 
 setInterval(saveAll, 30000);
+checkAchievements();
+
+// Make functions globally accessible
+window.play = play;
+window.fullscreenGame = fullscreenGame;
+window.newTab = newTab;
+window.toggleFavorite = toggleFavorite;
+window.rateGame = rateGame;
+window.startEdit = startEdit;
+window.del = del;
+window.filterByCategory = filterByCategory;
+window.addCustomCategory = addCustomCategory;
+window.deleteCategory = deleteCategory;
 </script>
 </body>
 </html>
