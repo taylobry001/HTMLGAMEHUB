@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Game Hub v2.0</title>
+<title>Ultimate Game Hub v2.5</title>
 <style>
 :root {
     --bg-primary: #050505;
@@ -20,6 +20,8 @@
     --warning: #ffaa00;
     --purple: #8844ff;
     --orange: #ff8800;
+    --pink: #ff4488;
+    --cyan: #00ffcc;
 }
 
 * {
@@ -33,10 +35,11 @@ body {
     background: var(--bg-primary);
     color: var(--text);
     overflow-x: hidden;
-    transition: background 0.5s ease;
+    transition: background 0.8s ease;
+    cursor: default;
 }
 
-/* === ORIGINAL BACKGROUND FX === */
+/* === BACKGROUND FX CONTAINER === */
 .bgEffects {
     position: fixed;
     inset: 0;
@@ -50,7 +53,66 @@ body {
     inset: 0;
     z-index: -3;
     pointer-events: none;
-    opacity: 0.8;
+    opacity: 0.85;
+}
+
+/* Floating Emojis */
+.emoji-float {
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    font-size: 28px;
+    animation: emojiDrift linear infinite;
+    opacity: 0.6;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+@keyframes emojiDrift {
+    0% { transform: translateY(105vh) rotate(0deg) scale(0.5); opacity: 0; }
+    10% { opacity: 0.7; }
+    90% { opacity: 0.7; }
+    100% { transform: translateY(-15vh) rotate(360deg) scale(1.2); opacity: 0; }
+}
+
+/* Particle Clash System */
+.clash-particle {
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+    animation: clashFloat linear infinite;
+}
+
+.clash-particle.fire {
+    background: radial-gradient(circle, #ff4400, #ff8800);
+    box-shadow: 0 0 15px #ff4400, 0 0 30px #ff8800;
+}
+
+.clash-particle.ice {
+    background: radial-gradient(circle, #00ccff, #0066ff);
+    box-shadow: 0 0 15px #00ccff, 0 0 30px #0066ff;
+}
+
+@keyframes clashFloat {
+    0% { transform: translate(0, 0) scale(0); opacity: 1; }
+    25% { transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5)) scale(1); opacity: 1; }
+    50% { transform: translate(var(--dx), var(--dy)) scale(0.8); opacity: 0.8; }
+    75% { transform: translate(calc(var(--dx) * 0.3), calc(var(--dy) * 1.2)) scale(1.2); opacity: 0.6; }
+    100% { transform: translate(calc(var(--dx) * -0.2), calc(var(--dy) * -0.5)) scale(0); opacity: 0; }
+}
+
+/* Particle Explosion */
+.explosion-particle {
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+    animation: explode 1.5s ease-out forwards;
+}
+
+@keyframes explode {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--ex), var(--ey)) scale(0); opacity: 0; }
 }
 
 .particles {
@@ -85,6 +147,14 @@ body {
     opacity: 0.2;
 }
 
+.particles span:nth-child(5n) {
+    width: 5px;
+    height: 5px;
+    background: #ff4488;
+    box-shadow: 0 0 8px #ff4488;
+    opacity: 0.25;
+}
+
 @keyframes float {
     from { transform: translateY(100vh) rotate(0deg); }
     to { transform: translateY(-10vh) rotate(360deg); }
@@ -94,7 +164,7 @@ body {
     position: absolute;
     width: 200%;
     height: 200%;
-    background: repeating-linear-gradient(90deg, transparent 0px, rgba(0, 170, 255, 0.05) 2px, transparent 4px);
+    background: repeating-linear-gradient(90deg, transparent 0px, rgba(0, 170, 255, 0.04) 2px, transparent 4px);
     animation: moveGrid 20s linear infinite;
 }
 
@@ -115,19 +185,54 @@ body {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.35;
+    opacity: 0.3;
     animation: floatOrb 12s ease-in-out infinite;
 }
 
 .glowOrb:nth-child(2) { animation-delay: -4s; animation-duration: 15s; }
 .glowOrb:nth-child(3) { animation-delay: -8s; animation-duration: 18s; }
+.glowOrb:nth-child(4) { animation-delay: -3s; animation-duration: 20s; width: 250px; height: 250px; background: #ff4488; top: 40%; left: 70%; }
+.glowOrb:nth-child(5) { animation-delay: -6s; animation-duration: 22s; width: 300px; height: 300px; background: #8844ff; top: 80%; left: 40%; }
 
 @keyframes floatOrb {
     0% { transform: translate(0, 0) scale(1); }
-    25% { transform: translate(80px, -60px) scale(1.15); }
-    50% { transform: translate(-40px, -100px) scale(1.25); }
-    75% { transform: translate(-80px, -20px) scale(1.1); }
+    25% { transform: translate(100px, -80px) scale(1.2); }
+    50% { transform: translate(-60px, -120px) scale(1.3); }
+    75% { transform: translate(-100px, -30px) scale(1.1); }
     100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Starfield */
+.starfield-star {
+    position: fixed;
+    z-index: -2;
+    pointer-events: none;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle ease-in-out infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* Aurora Waves */
+.aurora-wave {
+    position: fixed;
+    z-index: -2;
+    pointer-events: none;
+    width: 200%;
+    height: 200px;
+    opacity: 0.3;
+    animation: auroraFlow 8s ease-in-out infinite;
+    filter: blur(30px);
+}
+
+@keyframes auroraFlow {
+    0% { transform: translateX(-10%) skewX(-5deg); }
+    50% { transform: translateX(5%) skewX(5deg); }
+    100% { transform: translateX(-10%) skewX(-5deg); }
 }
 
 /* === HEADER === */
@@ -135,7 +240,7 @@ header {
     text-align: center;
     padding: 25px;
     background: var(--bg-secondary);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     position: relative;
     z-index: 10;
@@ -143,7 +248,18 @@ header {
 
 header h1 {
     font-size: 48px;
-    text-shadow: 0 0 10px #00aaff, 0 0 30px #00aaff, 0 0 60px #00aaff;
+    background: linear-gradient(135deg, #00aaff, #8844ff, #ff4488);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(0,170,255,0.5));
+    animation: titleShine 3s ease-in-out infinite;
+}
+
+@keyframes titleShine {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(0,170,255,0.5)); }
+    50% { filter: drop-shadow(0 0 40px rgba(136,68,255,0.8)); }
 }
 
 /* === GAME UPDATE ANIMATION === */
@@ -182,7 +298,7 @@ header h1 {
     align-items: center;
     padding: 15px 20px;
     background: rgba(15, 15, 15, 0.7);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
     flex-wrap: wrap;
     gap: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -192,28 +308,53 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     padding: 5px 15px;
     border-radius: 30px;
     border: 1px solid rgba(0, 170, 255, 0.3);
     transition: 0.3s;
 }
 
-.search-area:focus-within { border-color: #00aaff; box-shadow: 0 0 15px rgba(0, 170, 255, 0.3); }
-.search-area input { background: transparent; border: none; color: white; padding: 8px; width: 200px; outline: none; }
+.search-area:focus-within { border-color: #00aaff; box-shadow: 0 0 20px rgba(0, 170, 255, 0.4); }
+.search-area input { background: transparent; border: none; color: white; padding: 8px; width: 220px; outline: none; font-size: 14px; }
 
+/* === BUTTON STYLES === */
 .gear {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
     transition: 0.3s;
-    padding: 8px 12px;
-    border-radius: 12px;
+    padding: 8px 14px;
+    border-radius: 14px;
+    position: relative;
 }
 
-.gear:hover { transform: rotate(90deg); background: rgba(0, 170, 255, 0.2); border-color: #00aaff; }
+.gear:hover { 
+    transform: scale(1.1); 
+    background: rgba(0, 170, 255, 0.2); 
+    border-color: #00aaff;
+    box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+}
+
+.gear .tooltip {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9);
+    color: #00aaff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
+}
+
+.gear:hover .tooltip { opacity: 1; }
 
 /* === CATEGORY FILTERS === */
 .category-filters {
@@ -222,7 +363,7 @@ header h1 {
     padding: 12px 20px;
     flex-wrap: wrap;
     background: rgba(10, 10, 10, 0.5);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     overflow-x: auto;
     align-items: center;
@@ -238,19 +379,21 @@ header h1 {
     font-size: 13px;
     transition: 0.3s;
     white-space: nowrap;
+    user-select: none;
 }
 
 .category-tag:hover, .category-tag.active {
-    background: rgba(0, 170, 255, 0.2);
+    background: rgba(0, 170, 255, 0.25);
     border-color: #00aaff;
     color: #00aaff;
-    box-shadow: 0 0 15px rgba(0, 170, 255, 0.2);
+    box-shadow: 0 0 20px rgba(0, 170, 255, 0.25);
+    transform: translateY(-2px);
 }
 
 .add-category-btn {
     padding: 6px 12px;
     border-radius: 20px;
-    background: rgba(0, 170, 255, 0.3);
+    background: rgba(0, 170, 255, 0.2);
     border: 1px dashed #00aaff;
     color: #00aaff;
     cursor: pointer;
@@ -258,7 +401,7 @@ header h1 {
     transition: 0.3s;
 }
 
-.add-category-btn:hover { background: rgba(0, 170, 255, 0.5); }
+.add-category-btn:hover { background: rgba(0, 170, 255, 0.4); }
 
 .delete-category-btn {
     padding: 2px 8px;
@@ -269,12 +412,15 @@ header h1 {
     cursor: pointer;
     font-size: 10px;
     margin-left: 4px;
+    transition: 0.2s;
 }
+
+.delete-category-btn:hover { background: rgba(255, 0, 0, 0.5); }
 
 /* === RECENTLY PLAYED === */
 .recently-played {
     padding: 10px 20px;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.35);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     gap: 10px;
@@ -285,7 +431,7 @@ header h1 {
 .recently-played span { color: var(--accent); font-size: 13px; }
 
 .recent-game-chip {
-    padding: 4px 12px;
+    padding: 5px 14px;
     background: rgba(0, 170, 255, 0.1);
     border: 1px solid rgba(0, 170, 255, 0.3);
     border-radius: 15px;
@@ -295,7 +441,7 @@ header h1 {
     transition: 0.2s;
 }
 
-.recent-game-chip:hover { background: rgba(0, 170, 255, 0.3); }
+.recent-game-chip:hover { background: rgba(0, 170, 255, 0.3); transform: scale(1.05); }
 
 /* === GAMES GRID === */
 .games {
@@ -307,12 +453,12 @@ header h1 {
 
 .card {
     background: var(--bg-card);
-    border-radius: 18px;
+    border-radius: 20px;
     overflow: hidden;
     border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.35);
-    transition: 0.3s;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -320,128 +466,131 @@ header h1 {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 102, 204, 0.05));
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(136, 68, 255, 0.05));
     opacity: 0;
-    transition: 0.3s;
+    transition: 0.4s;
     pointer-events: none;
 }
 
 .card:hover::before { opacity: 1; }
-.card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 0 35px rgba(0, 170, 255, 0.35); border-color: rgba(0, 170, 255, 0.3); }
+.card:hover { 
+    transform: translateY(-12px) scale(1.03); 
+    box-shadow: 0 0 50px rgba(0, 170, 255, 0.4), 0 10px 40px rgba(0,0,0,0.6); 
+    border-color: rgba(0, 170, 255, 0.4); 
+}
 
 .card img, .card video, .card iframe.yt-thumb {
     width: 100%;
-    height: 180px;
+    height: 190px;
     object-fit: cover;
     background: #1a1a1a;
     border: none;
     pointer-events: none;
+    image-rendering: auto;
+    transition: 0.3s;
 }
 
-.card img {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-}
+.card:hover img { transform: scale(1.02); }
 
-.info { padding: 15px; }
-.info h2 { margin-bottom: 10px; font-size: 18px; }
-.desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 10px; line-height: 1.4; }
-.meta { color: #777; font-size: 12px; margin-top: 6px; display: flex; justify-content: space-between; }
+/* === CARD CONTENT === */
+.info { padding: 18px; }
+.info h2 { margin-bottom: 10px; font-size: 19px; font-weight: 600; }
+.desc { color: var(--text-secondary); font-size: 13px; margin-bottom: 10px; line-height: 1.5; }
+.meta { color: #777; font-size: 11px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
 
-.game-tags { display: flex; gap: 4px; flex-wrap: wrap; margin: 5px 0; }
-.game-tag { padding: 2px 8px; background: rgba(0, 170, 255, 0.15); border-radius: 10px; font-size: 10px; color: #00aaff; border: 1px solid rgba(0, 170, 255, 0.2); }
+.game-tags { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0; }
+.game-tag { padding: 3px 10px; background: rgba(0, 170, 255, 0.15); border-radius: 12px; font-size: 10px; color: #00aaff; border: 1px solid rgba(0, 170, 255, 0.25); }
 
 /* === BUTTONS === */
 .playBtn {
     width: 100%;
-    padding: 10px;
+    padding: 11px;
     margin-top: 8px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     color: white;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.3s;
     font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 0.5px;
 }
 
-.playBtn:hover { transform: scale(1.03); }
-.blue { background: #0099ff; }
-.green { background: #00aa55; }
-.purple { background: #8844ff; }
-.orange { background: #ff8800; }
-.red-btn { background: #ff4444; }
+.playBtn:hover { transform: scale(1.04); filter: brightness(1.2); }
+.blue { background: linear-gradient(135deg, #0099ff, #0066cc); }
+.green { background: linear-gradient(135deg, #00cc66, #009944); }
+.purple { background: linear-gradient(135deg, #8844ff, #6622cc); }
+.orange { background: linear-gradient(135deg, #ff8800, #cc6600); }
+.red-btn { background: linear-gradient(135deg, #ff4444, #cc2222); }
+.pink-btn { background: linear-gradient(135deg, #ff4488, #cc2266); }
 
 /* === FAVORITES & RATING === */
 .favorite-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.6);
-    border: none;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(255,255,255,0.2);
     color: white;
-    width: 35px;
-    height: 35px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     cursor: pointer;
     font-size: 18px;
     transition: 0.3s;
     z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.favorite-btn:hover { transform: scale(1.2); }
-.favorite-btn.active { color: #ff4081; background: rgba(255, 0, 100, 0.3); }
+.favorite-btn:hover { transform: scale(1.2); border-color: #ff4488; }
+.favorite-btn.active { color: #ff4081; background: rgba(255, 0, 100, 0.3); border-color: #ff4081; }
 
-.rating { display: flex; gap: 2px; margin: 5px 0; }
-.star { color: #555; cursor: pointer; font-size: 16px; transition: 0.2s; }
-.star:hover, .star.active { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
+.rating { display: flex; gap: 3px; margin: 6px 0; }
+.star { color: #444; cursor: pointer; font-size: 18px; transition: 0.2s; }
+.star:hover, .star.active { color: #ffd700; text-shadow: 0 0 8px #ffd700; transform: scale(1.2); }
 
 /* === LEADERBOARD === */
 .leaderboard-section {
-    background: rgba(255, 170, 0, 0.1);
+    background: rgba(255, 170, 0, 0.08);
     border: 1px solid rgba(255, 170, 0, 0.3);
-    border-radius: 8px;
-    padding: 8px;
+    border-radius: 10px;
+    padding: 10px;
     margin-top: 8px;
-    font-size: 12px;
+    font-size: 11px;
     color: #ffaa00;
-    max-height: 100px;
+    max-height: 110px;
     overflow-y: auto;
 }
 
-.leaderboard-entry {
-    display: flex;
-    justify-content: space-between;
-    padding: 2px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.leaderboard-entry:first-child { color: #ffd700; font-weight: bold; }
-
-/* === ACHIEVEMENTS === */
+/* === ACHIEVEMENT POPUP === */
 .achievement-popup {
     position: fixed;
-    bottom: 20px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
     color: #000;
-    padding: 15px 25px;
+    padding: 16px 30px;
     border-radius: 50px;
     font-weight: bold;
+    font-size: 15px;
     z-index: 10003;
-    animation: achievePop 0.5s ease-out, achieveFade 3s 2s forwards;
+    animation: achievePop 0.6s ease-out, achieveFade 3s 2.5s forwards;
     white-space: nowrap;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.7);
 }
 
 @keyframes achievePop {
-    0% { transform: translateX(-50%) scale(0); }
-    70% { transform: translateX(-50%) scale(1.2); }
-    100% { transform: translateX(-50%) scale(1); }
+    0% { transform: translateX(-50%) scale(0) rotate(-10deg); }
+    60% { transform: translateX(-50%) scale(1.2) rotate(3deg); }
+    100% { transform: translateX(-50%) scale(1) rotate(0deg); }
 }
 
 @keyframes achieveFade {
-    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 0; transform: translateX(-50%) translateY(-30px); }
 }
 
 /* === AI ASSISTANT === */
@@ -453,69 +602,85 @@ header h1 {
 }
 
 .ai-btn {
-    width: 55px;
-    height: 55px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg, #00aaff, #8844ff);
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
-    box-shadow: 0 0 25px rgba(0, 170, 255, 0.5);
+    box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);
     transition: 0.3s;
+    animation: aiPulse 2s ease-in-out infinite;
 }
 
-.ai-btn:hover { transform: scale(1.1); box-shadow: 0 0 40px rgba(0, 170, 255, 0.8); }
+@keyframes aiPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(0, 170, 255, 0.6); }
+    50% { box-shadow: 0 0 50px rgba(136, 68, 255, 0.9); }
+}
+
+.ai-btn:hover { transform: scale(1.15); }
 
 .ai-chat {
     position: absolute;
-    bottom: 65px;
+    bottom: 75px;
     right: 0;
-    width: 320px;
-    height: 400px;
-    background: rgba(15, 15, 25, 0.97);
-    border: 1px solid rgba(0, 170, 255, 0.4);
-    border-radius: 15px;
+    width: 350px;
+    height: 450px;
+    background: rgba(10, 10, 20, 0.98);
+    border: 1px solid rgba(0, 170, 255, 0.5);
+    border-radius: 18px;
     display: none;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
 }
 
 .ai-chat.active { display: flex; }
 
 .ai-chat-header {
-    padding: 12px;
+    padding: 14px;
     background: rgba(0, 170, 255, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-weight: bold;
     color: #00aaff;
+    font-size: 14px;
 }
 
 .ai-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 12px;
     font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .ai-message {
-    margin-bottom: 8px;
-    padding: 8px 12px;
-    border-radius: 12px;
+    padding: 10px 14px;
+    border-radius: 14px;
     max-width: 85%;
+    line-height: 1.4;
+    animation: msgPop 0.3s ease-out;
+}
+
+@keyframes msgPop {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .ai-message.user {
-    background: rgba(0, 170, 255, 0.2);
+    background: rgba(0, 170, 255, 0.25);
     margin-left: auto;
     color: white;
 }
 
 .ai-message.bot {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: #ccc;
 }
 
@@ -528,137 +693,190 @@ header h1 {
 
 .ai-input-area input {
     flex: 1;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 20px;
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 170, 255, 0.4);
+    background: rgba(0, 0, 0, 0.4);
     color: white;
     font-size: 12px;
     outline: none;
 }
 
 .ai-input-area button {
-    padding: 8px 15px;
+    padding: 10px 18px;
     border-radius: 20px;
-    background: #00aaff;
+    background: linear-gradient(135deg, #00aaff, #0066cc);
     border: none;
     color: white;
     cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
 }
 
+.ai-input-area button:hover { filter: brightness(1.3); }
+
 /* === MODALS === */
-.loginOverlay, .stats-overlay, .settings-overlay, .achievements-overlay {
+.overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.88);
+    background: rgba(0, 0, 0, 0.9);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
 }
 
-.loginBox, .stats-dashboard, .settings-panel, .achievements-panel {
-    background: #1d1d1d;
-    padding: 25px;
-    border-radius: 16px;
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    animation: pop 0.3s;
+.modal {
+    background: #1a1a25;
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 170, 255, 0.4);
+    animation: modalPop 0.3s ease-out;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
-@keyframes pop {
-    from { transform: scale(0.7); opacity: 0; }
+@keyframes modalPop {
+    from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
-.loginBox { width: 320px; }
-.loginBox input, .loginBox button { width: 100%; padding: 10px; margin-top: 12px; border-radius: 10px; }
-.loginBox input { background: #2a2a2a; border: 1px solid #333; color: white; }
-.loginBox button { background: #00aa55; border: none; color: white; }
+.modal-sm { width: 340px; }
+.modal-md { width: 90%; max-width: 550px; }
+.modal-lg { width: 90%; max-width: 650px; }
 
-.stats-dashboard { width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
-.stat-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.stat-value { color: #00aaff; font-weight: bold; }
-
-.settings-panel { width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
-.settings-panel textarea, .settings-panel select {
+.modal input, .modal textarea, .modal select {
     width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #2a2a2a;
+    padding: 12px;
+    margin-top: 10px;
+    border: 1px solid #333;
+    border-radius: 12px;
+    background: #222;
     color: white;
-    font-family: monospace;
-    font-size: 12px;
-    resize: vertical;
-    margin: 5px 0;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
 }
 
-.achievements-panel { width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+.modal input:focus, .modal textarea:focus { border-color: #00aaff; box-shadow: 0 0 15px rgba(0,170,255,0.2); }
 
-/* === ADMIN === */
+.modal button {
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 12px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.stat-item { display: flex; justify-content: space-between; padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.stat-value { color: #00aaff; font-weight: bold; font-size: 16px; }
+
+/* === ADMIN PANEL === */
 .adminPanel {
     position: fixed;
     top: 0;
-    right: -460px;
-    width: 460px;
+    right: -500px;
+    width: 500px;
     height: 100%;
     overflow: auto;
-    background: linear-gradient(180deg, rgba(20, 20, 20, 0.97), rgba(5, 5, 5, 0.98));
-    backdrop-filter: blur(16px);
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
-    padding: 20px;
-    transition: 0.3s;
-    z-index: 9999;
+    background: rgba(8, 8, 15, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.7);
+    padding: 25px;
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9998;
+    border-left: 1px solid rgba(0, 170, 255, 0.3);
 }
 
 .adminPanel.active { right: 0; }
+.adminPanel h2, .adminPanel h3 { color: #00aaff; margin-bottom: 10px; }
+.adminPanel label { display: block; color: #aaa; font-size: 12px; margin-top: 10px; }
+
 .adminPanel input, .adminPanel textarea, .adminPanel select {
     width: 100%;
     padding: 10px;
-    margin-top: 10px;
+    margin-top: 5px;
     border: 1px solid #333;
     border-radius: 10px;
-    background: var(--input-bg);
+    background: #1a1a1a;
     color: white;
+    font-size: 13px;
 }
 
-.addBtn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; color: white; cursor: pointer; }
-.file-label { display: inline-block; background: #3a3a3a; padding: 8px 12px; border-radius: 8px; margin-top: 8px; cursor: pointer; font-size: 12px; }
+.adminPanel textarea { min-height: 80px; resize: vertical; font-family: monospace; font-size: 11px; }
 
-iframe#frame {
-    width: 100%;
-    height: 700px;
+.file-label { 
+    display: inline-block; 
+    background: #333; 
+    padding: 8px 14px; 
+    border-radius: 10px; 
+    margin: 6px 4px; 
+    cursor: pointer; 
+    font-size: 12px; 
+    transition: 0.2s;
+    border: 1px solid #555;
+}
+
+.file-label:hover { background: #444; border-color: #00aaff; }
+
+.admin-game-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.admin-game-item button {
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 8px;
     border: none;
-    display: none;
-    background: white;
-    border-radius: 12px;
+    cursor: pointer;
+    font-size: 11px;
+    color: white;
 }
 
 /* === TOAST === */
 .toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
 .toast {
-    background: rgba(20, 20, 20, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    padding: 15px 20px;
-    border-radius: 12px;
+    background: rgba(20, 20, 30, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 170, 255, 0.4);
+    padding: 16px 24px;
+    border-radius: 14px;
     color: white;
     animation: slideIn 0.3s ease-out;
-    min-width: 250px;
+    min-width: 260px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.toast.success { border-color: #00aa55; }
+.toast.success { border-color: #00cc66; }
 .toast.error { border-color: #ff4444; }
 
-@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
-    header h1 { font-size: 32px; }
+    header h1 { font-size: 30px; }
     .games { grid-template-columns: 1fr; }
     .adminPanel { width: 100%; right: -100%; }
+    .ai-chat { width: 300px; height: 380px; }
 }
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 170, 255, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 170, 255, 0.6); }
 </style>
 </head>
 <body>
@@ -669,124 +887,108 @@ iframe#frame {
     <div class="glowOrb" style="width: 400px; height: 400px; background: #00aaff; top: 20%; left: 25%;"></div>
     <div class="glowOrb" style="width: 350px; height: 350px; background: #0066cc; top: 50%; left: 60%;"></div>
     <div class="glowOrb" style="width: 300px; height: 300px; background: #0099ff; top: 70%; left: 15%;"></div>
+    <div class="glowOrb" style="width: 250px; height: 250px; background: #ff4488; top: 35%; left: 70%;"></div>
+    <div class="glowOrb" style="width: 280px; height: 280px; background: #8844ff; top: 75%; left: 45%;"></div>
 </div>
 
-<div class="particles"></div>
+<div class="particles" id="particlesContainer"></div>
+<div id="emojiContainer"></div>
+<div id="clashContainer"></div>
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- AI Assistant -->
 <div class="ai-assistant">
     <div class="ai-chat" id="aiChat">
         <div class="ai-chat-header">
-            <span>🤖 Game Hub AI v2.0</span>
-            <button onclick="toggleAI()" style="background:none;border:none;color:white;cursor:pointer;font-size:18px;">✕</button>
+            <span>🤖 Hub AI v2.5</span>
+            <button onclick="toggleAI()" style="background:none;border:none;color:white;cursor:pointer;font-size:20px;">✕</button>
         </div>
         <div class="ai-messages" id="aiMessages">
-            <div class="ai-message bot">Hello! I'm your enhanced Game Hub assistant v2.0. I can recommend games, generate mini-games, track achievements, and more!</div>
+            <div class="ai-message bot">Hey! 👋 I'm your enhanced Game Hub AI. I can:
+• 🎮 Recommend games
+• 🖼️ Find game images
+• 🤖 Generate mini-games
+• 🏆 Track achievements
+• 💡 Give tips & tricks
+Ask me anything!</div>
         </div>
         <div class="ai-input-area">
-            <input id="aiInput" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter')sendAIMessage()">
-            <button onclick="sendAIMessage()">Send</button>
+            <input id="aiInput" placeholder="Type here... (e.g., 'find image for snake game')" onkeypress="if(event.key==='Enter')sendAIMessage()">
+            <button onclick="sendAIMessage()">➤</button>
         </div>
     </div>
     <button class="ai-btn" onclick="toggleAI()">🤖</button>
 </div>
 
-<!-- Login -->
-<div class="loginOverlay" id="loginOverlay">
-    <div class="loginBox">
-        <h2>Admin Login</h2>
-        <input type="password" id="pass" placeholder="Password">
-        <button onclick="login()">Unlock</button>
-    </div>
-</div>
+<!-- Modals -->
+<div class="overlay" id="loginOverlay"><div class="modal modal-sm"><h2>🔐 Admin Login</h2><input type="password" id="pass" placeholder="Password"><button onclick="login()" style="background:linear-gradient(135deg,#00cc66,#009944);">Unlock</button></div></div>
 
-<!-- Stats -->
-<div class="stats-overlay" id="statsOverlay" onclick="closeStats()"></div>
-<div class="stats-dashboard" id="statsDashboard" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10001;">
+<div class="overlay" id="statsOverlay" onclick="closeStats()"></div>
+<div class="modal" id="statsDashboard" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;width:90%;max-width:600px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <h2>📊 Statistics</h2>
-        <button onclick="closeStats()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
+        <button onclick="closeStats()" style="background:red;width:40px;height:40px;border-radius:50%;font-size:18px;">✕</button>
     </div>
     <div class="stat-item"><span>Total Games</span><span class="stat-value" id="statTotalGames">0</span></div>
     <div class="stat-item"><span>Total Plays</span><span class="stat-value" id="statTotalPlays">0</span></div>
     <div class="stat-item"><span>Total Play Time</span><span class="stat-value" id="statTotalTime">0min</span></div>
     <div class="stat-item"><span>Most Played</span><span class="stat-value" id="statMostPlayed">-</span></div>
     <div class="stat-item"><span>Avg Rating</span><span class="stat-value" id="statAvgRating">-</span></div>
-    <div class="stat-item"><span>Achievements Unlocked</span><span class="stat-value" id="statAchievements">0</span></div>
+    <div class="stat-item"><span>Achievements</span><span class="stat-value" id="statAchievements">0/10</span></div>
 </div>
 
-<!-- Settings -->
-<div class="settings-overlay" id="settingsOverlay">
-    <div class="settings-panel" id="settingsPanelContent">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2>⚙️ Settings & QOL</h2>
-            <button onclick="closeSettings()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
-        </div>
-        <h3>🎨 Background Theme</h3>
-        <select id="bgSelect" onchange="changeBG()">
-            <option value="default">Default Cosmic</option>
-            <option value="matrix">Matrix Rain</option>
-            <option value="stars">Starry Night</option>
-            <option value="sunset">Sunset Glow</option>
-            <option value="purple">Purple Void</option>
-            <option value="ocean">Deep Ocean</option>
-            <option value="fire">Fire Storm</option>
-            <option value="grid">Cyber Grid</option>
-            <option value="forest">Mystic Forest</option>
-            <option value="blood">Blood Moon</option>
-            <option value="neon">Neon City</option>
-            <option value="aurora">Aurora Waves</option>
-            <option value="galaxy">Spiral Galaxy</option>
-            <option value="sunrise">Golden Sunrise</option>
-            <option value="arctic">Arctic Frost</option>
-        </select>
-        <br><br>
-        <h3>📦 Import/Export Data</h3>
-        <textarea id="exportCode" readonly style="min-height:100px;"></textarea>
-        <button onclick="copyExportCode()" class="playBtn blue">📋 Copy Export Code</button>
-        <textarea id="importCode" placeholder="Paste import code here..." style="min-height:100px;margin-top:10px;"></textarea>
-        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;font-size:12px;"><input type="checkbox" id="replaceExisting"> Replace existing data</label>
-        <button onclick="importGames()" class="playBtn green">📥 Import</button>
-        <br><br>
-        <h3>🏆 Achievements</h3>
-        <button onclick="showAchievements()" class="playBtn orange">View Achievements</button>
+<div class="overlay" id="settingsOverlay"><div class="modal modal-lg" id="settingsContent">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2>⚙️ Settings</h2>
+        <button onclick="closeSettings()" style="background:red;width:40px;height:40px;border-radius:50%;font-size:18px;">✕</button>
     </div>
-</div>
+    <h3>🎨 Background Theme</h3>
+    <select id="bgSelect" onchange="changeBG()"></select>
+    <p style="font-size:11px;color:#888;margin-top:5px;">🔒 Some themes unlock with achievements</p>
+    <br>
+    <h3>😊 Floating Emojis</h3>
+    <select id="emojiTheme" onchange="changeEmojiTheme()">
+        <option value="gaming">🎮 Gaming</option>
+        <option value="nature">🌿 Nature</option>
+        <option value="space">🚀 Space</option>
+        <option value="party">🎉 Party</option>
+        <option value="random">🎲 Random</option>
+    </select>
+    <br><br>
+    <h3>📦 Import/Export</h3>
+    <textarea id="exportCode" readonly style="min-height:100px;background:#1a1a1a;color:white;border-radius:10px;padding:10px;width:100%;margin:5px 0;"></textarea>
+    <button onclick="copyExportCode()" class="playBtn blue" style="width:auto;display:inline-block;padding:10px 20px;">📋 Copy</button>
+    <textarea id="importCode" placeholder="Paste code..." style="min-height:100px;background:#1a1a1a;color:white;border-radius:10px;padding:10px;width:100%;margin:10px 0;"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#aaa;"><input type="checkbox" id="replaceExisting"> Replace existing</label>
+    <button onclick="importGames()" class="playBtn green" style="width:auto;display:inline-block;padding:10px 20px;">📥 Import</button>
+    <br><br>
+    <button onclick="showAchievements()" class="playBtn orange" style="width:auto;display:inline-block;padding:10px 20px;">🏆 View Achievements</button>
+</div></div>
 
-<!-- Achievements -->
-<div class="achievements-overlay" id="achievementsOverlay">
-    <div class="achievements-panel" id="achievementsPanelContent">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-            <h2>🏆 Achievements</h2>
-            <button onclick="closeAchievements()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
-        </div>
-        <div id="achievementsList"></div>
+<div class="overlay" id="achievementsOverlay"><div class="modal modal-md">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2>🏆 Achievements</h2>
+        <button onclick="closeAchievements()" style="background:red;width:40px;height:40px;border-radius:50%;font-size:18px;">✕</button>
     </div>
-</div>
+    <div id="achievementsList"></div>
+</div></div>
 
-<header><h1>🎮 GAME HUB 2.0</h1></header>
+<header><h1>🎮 ULTIMATE GAME HUB</h1></header>
 
 <div class="topbar">
     <div class="search-area">
         <span>🔍</span>
-        <input type="text" id="searchInput" placeholder="Search... (Ctrl+K)" onkeyup="filterGames()">
+        <input type="text" id="searchInput" placeholder="Search games... (Ctrl+K)" onkeyup="filterGames()">
     </div>
-    <div>Plays: <span id="totalViews">0</span> | Games: <span id="totalGames">0</span></div>
+    <div style="color:#aaa;font-size:14px;">🎮 <span id="totalViews">0</span> plays | 📦 <span id="totalGames">0</span> games</div>
     <div style="display:flex;gap:10px;">
-        <button class="gear" onclick="openSettings()" title="Settings & QOL">⚙️</button>
-        <button class="gear" onclick="openStats()" title="Statistics">📊</button>
-        <button class="gear" onclick="toggleAdmin()" title="Admin Panel">🛡️</button>
+        <button class="gear" onclick="openSettings()">⚙️<span class="tooltip">Settings</span></button>
+        <button class="gear" onclick="openStats()">📊<span class="tooltip">Stats</span></button>
+        <button class="gear" onclick="toggleAdmin()">🛡️<span class="tooltip">Admin</span></button>
     </div>
 </div>
 
-<div class="category-filters" id="categoryFilters">
-    <span class="category-tag active" onclick="filterByCategory('all', this)">🎯 All</span>
-    <span class="category-tag" onclick="filterByCategory('favorites', this)">⭐ Favorites</span>
-    <span class="category-tag" onclick="filterByCategory('recent', this)">🕐 Recent</span>
-    <span class="category-tag" onclick="filterByCategory('mostPlayed', this)">🔥 Popular</span>
-    <span class="add-category-btn" onclick="addCustomCategory()">➕ Add Category</span>
-</div>
+<div class="category-filters" id="categoryFilters"></div>
 
 <div class="recently-played">
     <span>🕐 Recent:</span>
@@ -794,1112 +996,444 @@ iframe#frame {
 </div>
 
 <div class="games" id="games"></div>
-<iframe id="frame" sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
+<iframe id="frame" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups" style="width:100%;height:700px;border:none;display:none;background:#000;border-radius:16px;margin:0 20px 20px;max-width:calc(100% - 40px);"></iframe>
 
 <div class="adminPanel" id="adminPanel">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2>🛡️ ADMIN PANEL</h2>
-        <button onclick="closeAdmin()" style="background:red;color:white;border:none;width:35px;height:35px;border-radius:10px;cursor:pointer;">✕</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        <h2>🛡️ Admin Panel</h2>
+        <button onclick="closeAdmin()" style="background:red;width:40px;height:40px;border-radius:50%;font-size:18px;color:white;">✕</button>
     </div>
-    <br>
-    <input id="title" placeholder="Game Title">
-    <input id="image" placeholder="Image URL or MP4 thumbnail URL">
-    <textarea id="desc" rows="3" placeholder="Description"></textarea>
-    <input id="tags" placeholder="Tags (comma separated)">
-    <select id="gameType" onchange="toggleCodeInput()">
-        <option value="html">HTML Game</option>
-        <option value="youtube">YouTube Video</option>
-        <option value="mp4">MP4 Video</option>
-    </select>
-    <textarea id="code" rows="8" placeholder="FULL HTML GAME CODE"></textarea>
-    <input id="youtubeUrl" placeholder="YouTube Video URL" style="display:none;">
+    <label>Game Title *</label><input id="title" placeholder="Enter game title...">
+    <label>Image URL (or use AI to find one)</label>
+    <div style="display:flex;gap:5px;"><input id="image" placeholder="https://..."><button onclick="aiFindImage()" style="width:auto;padding:10px 15px;background:#8844ff;border-radius:10px;color:white;font-size:12px;white-space:nowrap;">🤖 AI Find</button></div>
+    <label>Description</label><textarea id="desc" rows="2" placeholder="Game description..."></textarea>
+    <label>Tags (comma separated)</label><input id="tags" placeholder="action, puzzle, 2d">
+    <label>Game Type</label><select id="gameType" onchange="toggleCodeInput()"><option value="html">HTML Game</option><option value="youtube">YouTube</option><option value="mp4">MP4 Video</option></select>
+    <label id="codeLabel">HTML Code *</label><textarea id="code" rows="6" placeholder="<html>..."></textarea>
+    <input id="youtubeUrl" placeholder="YouTube URL" style="display:none;">
     <input id="mp4Url" placeholder="MP4 Video URL" style="display:none;">
-    <div>
+    <div style="margin-top:8px;">
         <label class="file-label" onclick="document.getElementById('htmlFileInput').click()">📄 Upload HTML</label>
         <input type="file" id="htmlFileInput" accept=".html" style="display:none" onchange="uploadHTMLFile()">
-        <label class="file-label" onclick="document.getElementById('mp4FileInput').click()" style="margin-left:5px;">🎬 Upload MP4</label>
+        <label class="file-label" onclick="document.getElementById('mp4FileInput').click()">🎬 Upload MP4</label>
         <input type="file" id="mp4FileInput" accept=".mp4" style="display:none" onchange="uploadMP4File()">
     </div>
-    <button class="addBtn" id="addGameBtn" onclick="addGame()" style="background:#00aa55;">ADD GAME</button>
+    <button id="addGameBtn" onclick="addGame()" style="background:linear-gradient(135deg,#00cc66,#009944);margin-top:12px;">✅ ADD GAME</button>
     <br><br>
-    <h3>🏷️ Custom Categories</h3>
-    <div id="customCategoriesList"></div>
-    <input id="newCategoryName" placeholder="New category name">
-    <button onclick="createCustomCategory()" class="addBtn" style="background:#8844ff;">CREATE CATEGORY</button>
+    <h3>🏷️ Categories</h3>
+    <div id="customCategoriesList" style="margin:8px 0;"></div>
+    <div style="display:flex;gap:5px;"><input id="newCategoryName" placeholder="New category"><button onclick="createCustomCategory()" style="width:auto;background:#8844ff;">Create</button></div>
+    <br>
+    <label>Admin Passwords</label><input id="admins" placeholder="pass1, pass2">
+    <button onclick="saveAdmins()" style="background:#ff8800;">💾 Save Admins</button>
     <br><br>
-    <input id="admins" placeholder="Admin Passwords (comma separated)">
-    <button class="addBtn" onclick="saveAdmins()" style="background:#8844ff;">SAVE ADMINS</button>
-    <br><br>
-    <h3>Games List</h3>
+    <h3>📋 Games</h3>
     <div id="adminList"></div>
 </div>
 
 <script>
-// ========== DATA MANAGEMENT ==========
-function setCookie(n, v, d) {
-    d = d || 365;
-    var date = new Date();
-    date.setTime(date.getTime() + (d * 86400000));
-    document.cookie = n + "=" + encodeURIComponent(v) + ";path=/;expires=" + date.toUTCString();
-}
+// ============ DATA ============
+function setCookie(n,v,d){d=d||365;var e=new Date();e.setTime(e.getTime()+d*864e5);document.cookie=n+"="+encodeURIComponent(v)+";path=/;expires="+e.toUTCString();}
+function getCookie(n){var m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?decodeURIComponent(m[2]):null;}
+function saveData(k,v){try{localStorage.setItem(k,JSON.stringify(v));setCookie('gh_'+k,JSON.stringify(v));}catch(e){setCookie('gh_'+k,JSON.stringify(v));}}
+function loadData(k,d){try{var l=localStorage.getItem(k);if(l)return JSON.parse(l);var c=getCookie('gh_'+k);if(c){localStorage.setItem(k,c);return JSON.parse(c);}}catch(e){}return d;}
 
-function getCookie(n) {
-    var m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
-    return m ? decodeURIComponent(m[2]) : null;
-}
-
-function saveData(k, v) {
-    try {
-        localStorage.setItem(k, JSON.stringify(v));
-        setCookie('gh_' + k, JSON.stringify(v));
-    } catch(e) {
-        setCookie('gh_' + k, JSON.stringify(v));
-    }
-}
-
-function loadData(k, d) {
-    try {
-        var l = localStorage.getItem(k);
-        if (l) return JSON.parse(l);
-        var c = getCookie('gh_' + k);
-        if (c) {
-            localStorage.setItem(k, c);
-            return JSON.parse(c);
-        }
-    } catch(e) {}
-    return d;
-}
-
-// ========== STATE ==========
-var adminPasswords = loadData("admins", ["1234"]);
-var unlocked = sessionStorage.getItem("admin") === "true";
-var games = loadData("games", []);
-var totalViews = parseInt(loadData("totalViews", 0));
-var playTimeData = loadData("playTimeData", {});
-var personalBests = loadData("personalBests", {});
-var ratings = loadData("ratings", {});
-var favorites = loadData("favorites", []);
-var gameTags = loadData("gameTags", {});
-var comments = loadData("comments", {});
-var recentlyPlayed = loadData("recentlyPlayed", []);
-var updatedGames = loadData("updatedGames", []);
-var gameLeaderboards = loadData("gameLeaderboards", {});
-var customCategories = loadData("customCategories", ["Action", "Puzzle", "Strategy", "Racing"]);
-var gameTypes = loadData("gameTypes", {});
-var achievements = loadData("achievements", {
-    firstPlay: false,
-    tenPlays: false,
-    favoriteFive: false,
-    ratingMaster: false,
-    playTime1h: false,
-    gameCollector: false,
-    miniGameCreator: false
+var adminPasswords=loadData("admins",["1234"]);
+var unlocked=sessionStorage.getItem("admin")==="true";
+var games=loadData("games",[]);
+var totalViews=parseInt(loadData("totalViews",0));
+var playTimeData=loadData("playTimeData",{});
+var personalBests=loadData("personalBests",{});
+var ratings=loadData("ratings",{});
+var favorites=loadData("favorites",[]);
+var gameTags=loadData("gameTags",{});
+var recentlyPlayed=loadData("recentlyPlayed",[]);
+var updatedGames=loadData("updatedGames",[]);
+var gameLeaderboards=loadData("gameLeaderboards",{});
+var customCategories=loadData("customCategories",["Action","Puzzle","Strategy","Racing","Adventure"]);
+var gameTypes=loadData("gameTypes",{});
+var achievements=loadData("achievements",{
+    firstPlay:false,tenPlays:false,favoriteFive:false,ratingMaster:false,
+    playTime1h:false,gameCollector:false,miniGameCreator:false,
+    backgroundUnlock1:false,backgroundUnlock2:false,allStar:false
 });
+var currentEmojiTheme=loadData("emojiTheme","gaming");
+var unlockedBackgrounds=loadData("unlockedBackgrounds",["default","matrix","stars","sunset","purple","ocean"]);
 
-document.getElementById("totalViews").innerText = totalViews;
-document.getElementById("totalGames").innerText = games.length;
-document.getElementById("admins").value = adminPasswords.join(",");
+document.getElementById("totalViews").innerText=totalViews;
+document.getElementById("totalGames").innerText=games.length;
+document.getElementById("admins").value=adminPasswords.join(",");
 
-// ========== BACKGROUND SYSTEM (EXPANDED) ==========
-var canvas = document.getElementById('bgCanvas');
-var ctx = canvas.getContext('2d');
-var bgAnimationId;
-var currentBG = loadData("bg", "default");
+// ============ ENHANCED BACKGROUND SYSTEM ============
+var canvas=document.getElementById('bgCanvas');
+var ctx=canvas.getContext('2d');
+var currentBG=loadData("bg","default");
+var bgParticles=[];
+var clashParticles=[];
+var starfieldStars=[];
+var auroraWaves=[];
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener('resize',resizeCanvas);
 resizeCanvas();
 
-function drawDefaultBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    var t = Date.now() * 0.001;
-    for (var i = 0; i < 80; i++) {
-        var x = (Math.sin(t + i * 0.5) * 0.5 + 0.5) * canvas.width;
-        var y = (Math.cos(t * 0.7 + i * 0.3) * 0.5 + 0.5) * canvas.height;
-        ctx.beginPath();
-        ctx.arc(x, y, Math.random() * 2 + 1, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, ' + (150 + Math.random() * 105) + ', 255, ' + (0.3 + Math.random() * 0.4) + ')';
-        ctx.fill();
+// Initialize starfield
+for(var i=0;i<200;i++){starfieldStars.push({x:Math.random()*2000,y:Math.random()*2000,size:Math.random()*2.5+1,speed:Math.random()*0.02+0.005,phase:Math.random()*Math.PI*2});}
+
+function drawDefaultBG(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var t=Date.now()*0.001;
+    for(var i=0;i<100;i++){
+        var x=(Math.sin(t+i*0.4)*0.5+0.5)*canvas.width;
+        var y=(Math.cos(t*0.6+i*0.35)*0.5+0.5)*canvas.height;
+        ctx.beginPath();ctx.arc(x,y,Math.random()*2.5+1,0,Math.PI*2);
+        ctx.fillStyle='rgba('+(100+Math.random()*155)+','+(50+Math.random()*100)+',255,'+(0.25+Math.random()*0.4)+')';ctx.fill();
+    }
+    drawStarfield();
+}
+
+function drawMatrixBG(){
+    ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f0';ctx.font='15px monospace';
+    for(var i=0;i<100;i++){var char=String.fromCharCode(0x30A0+Math.random()*96);ctx.fillText(char,Math.random()*canvas.width,Math.random()*canvas.height);}
+    ctx.fillStyle='#00ff00';ctx.font='18px monospace';
+    for(var i=0;i<20;i++){ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96),Math.random()*canvas.width,Math.random()*canvas.height);}
+}
+
+function drawStarsBG(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i=0;i<starfieldStars.length;i++){
+        var s=starfieldStars[i];var tw=Math.sin(Date.now()*s.speed+s.phase)*0.5+0.5;
+        ctx.beginPath();ctx.arc(s.x%canvas.width,s.y%canvas.height,s.size,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,'+(0.3+tw*0.7)+')';ctx.fill();
     }
 }
 
-function drawMatrixBG() {
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#0f0';
-    ctx.font = '14px monospace';
-    for (var i = 0; i < 80; i++) {
-        ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), Math.random() * canvas.width, Math.random() * canvas.height);
+function drawAuroraBG(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i=0;i<3;i++){
+        var grad=ctx.createLinearGradient(0,canvas.height*(0.2+i*0.2),canvas.width,canvas.height*(0.4+i*0.2));
+        var hue=[150,260,190][i];grad.addColorStop(0,'hsla('+hue+',100%,60%,0.15)');
+        grad.addColorStop(0.5,'hsla('+(hue+40)+',100%,50%,0.2)');grad.addColorStop(1,'hsla('+(hue-20)+',100%,70%,0.1)');
+        ctx.fillStyle=grad;ctx.fillRect(0,canvas.height*(0.15+i*0.2)+Math.sin(Date.now()*0.0008+i)*20,canvas.width,canvas.height*0.3);
+    }
+    drawStarfield();
+}
+
+function drawGalaxyBG(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var cx=canvas.width/2,cy=canvas.height/2;
+    for(var i=0;i<300;i++){
+        var angle=Math.random()*Math.PI*2;var dist=Math.random()*Math.max(canvas.width,canvas.height)*0.8;
+        var x=cx+Math.cos(angle)*dist+Math.sin(dist*0.01+Date.now()*0.0003)*20;
+        var y=cy+Math.sin(angle)*dist*0.6+Math.cos(dist*0.01+Date.now()*0.0003)*20;
+        ctx.beginPath();ctx.arc(x,y,Math.random()*2,0,Math.PI*2);
+        ctx.fillStyle='rgba('+(200+Math.random()*55)+','+(150+Math.random()*105)+',255,'+Math.random()*0.5+')';ctx.fill();
     }
 }
 
-function drawStarsBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < 150; i++) {
-        var tw = Math.sin(Date.now() * 0.003 + i) * 0.5 + 0.5;
-        ctx.beginPath();
-        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + tw * 0.7) + ')';
-        ctx.fill();
+function drawFireIceClash(){
+    ctx.fillStyle='rgba(0,0,0,0.15)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Fire side (left)
+    for(var i=0;i<60;i++){
+        var x=Math.random()*canvas.width*0.5;var y=Math.random()*canvas.height;
+        ctx.beginPath();ctx.arc(x,y,Math.random()*4+1,0,Math.PI*2);
+        var alpha=0.3+Math.random()*0.5;ctx.fillStyle='rgba(255,'+Math.floor(Math.random()*150)+',0,'+alpha+')';ctx.fill();
+    }
+    // Ice side (right)
+    for(var i=0;i<60;i++){
+        var x=canvas.width*0.5+Math.random()*canvas.width*0.5;var y=Math.random()*canvas.height;
+        ctx.beginPath();ctx.arc(x,y,Math.random()*4+1,0,Math.PI*2);
+        ctx.fillStyle='rgba(0,'+Math.floor(150+Math.random()*105)+',255,'+(0.3+Math.random()*0.5)+')';ctx.fill();
+    }
+    // Clash zone particles
+    var midX=canvas.width*0.5+Math.sin(Date.now()*0.002)*30;
+    for(var i=0;i<30;i++){
+        ctx.beginPath();ctx.arc(midX+Math.random()*60-30,Math.random()*canvas.height,Math.random()*3,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,'+(0.4+Math.random()*0.6)+')';ctx.fill();
+    }
+    // Explosion sparks
+    if(Math.random()<0.3){spawnClashExplosion(midX,Math.random()*canvas.height);}
+}
+
+function spawnClashExplosion(x,y){
+    for(var i=0;i<20;i++){
+        var p=document.createElement('div');p.className='explosion-particle';
+        p.style.left=x+'px';p.style.top=y+'px';
+        p.style.width=Math.random()*6+2+'px';p.style.height=p.style.width;
+        p.style.setProperty('--ex',(Math.random()-0.5)*200+'px');
+        p.style.setProperty('--ey',(Math.random()-0.5)*200+'px');
+        p.style.background=Math.random()<0.5?'#ff4400':'#00ccff';
+        p.style.boxShadow='0 0 '+Math.random()*10+'px '+p.style.background;
+        document.getElementById('clashContainer').appendChild(p);
+        setTimeout(function(){p.remove();},1500);
     }
 }
 
-function drawAuroraBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    var grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, 'rgba(0, 255, 150, ' + (0.2 + Math.sin(Date.now() * 0.001) * 0.1) + ')');
-    grad.addColorStop(0.5, 'rgba(100, 0, 255, 0.2)');
-    grad.addColorStop(1, 'rgba(0, 200, 255, 0.2)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-function drawGalaxyBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < 200; i++) {
-        ctx.beginPath();
-        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 200, 255, ' + Math.random() * 0.5 + ')';
-        ctx.fill();
+function drawNeonCity(){
+    ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fillRect(0,0,canvas.width,canvas.height);
+    for(var i=0;i<40;i++){
+        var x=i*canvas.width/40;var h=Math.random()*canvas.height*0.6+canvas.height*0.1;
+        ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(x,canvas.height-h,canvas.width/40-1,h);
+        var colors=['#ff00ff','#00ffff','#ff0088','#8800ff'];var c=colors[Math.floor(Math.random()*colors.length)];
+        ctx.fillStyle=c;ctx.fillRect(x+2,canvas.height-h,2,2);
+        ctx.shadowColor=c;ctx.shadowBlur=8;ctx.fillRect(x+2,canvas.height-h,2,2);ctx.shadowBlur=0;
     }
 }
 
-function drawSunriseBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    var grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    grad.addColorStop(0, '#ff6b35');
-    grad.addColorStop(0.5, '#f7c59f');
-    grad.addColorStop(1, '#2c3e50');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+function drawSunriseBG(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var grad=ctx.createLinearGradient(0,0,0,canvas.height);
+    grad.addColorStop(0,'#1a0a2e');grad.addColorStop(0.3,'#ff6b35');grad.addColorStop(0.6,'#ffb347');grad.addColorStop(1,'#87CEEB');
+    ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Sun
+    var sunY=canvas.height*0.5+Math.sin(Date.now()*0.0005)*20;
+    var sunGrad=ctx.createRadialGradient(canvas.width*0.7,sunY,10,canvas.width*0.7,sunY,150);
+    sunGrad.addColorStop(0,'rgba(255,255,200,0.9)');sunGrad.addColorStop(1,'rgba(255,180,50,0)');
+    ctx.fillStyle=sunGrad;ctx.fillRect(canvas.width*0.5,sunY-150,canvas.width*0.5,300);
 }
 
-function drawArcticBG() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < 120; i++) {
-        ctx.beginPath();
-        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(200, 230, 255, ' + Math.random() * 0.6 + ')';
-        ctx.fill();
-    }
-}
-
-function animateBG() {
-    switch(currentBG) {
-        case 'matrix': drawMatrixBG(); break;
-        case 'stars': drawStarsBG(); break;
-        case 'aurora': drawAuroraBG(); break;
-        case 'galaxy': drawGalaxyBG(); break;
-        case 'sunrise': drawSunriseBG(); break;
-        case 'arctic': drawArcticBG(); break;
-        default: drawDefaultBG();
-    }
-    bgAnimationId = requestAnimationFrame(animateBG);
-}
-
-function changeBG() {
-    currentBG = document.getElementById("bgSelect").value;
-    var body = document.body;
-    body.style.background = "#050505";
-    switch(currentBG) {
-        case "matrix": body.style.background = "linear-gradient(180deg,#000,#001100)"; break;
-        case "stars": body.style.background = "radial-gradient(circle,#111,#000)"; break;
-        case "sunset": body.style.background = "linear-gradient(135deg,#ff5f6d,#ffc371)"; break;
-        case "purple": body.style.background = "linear-gradient(135deg,#0f001f,#3a005f)"; break;
-        case "ocean": body.style.background = "linear-gradient(180deg,#001f3f,#005577)"; break;
-        case "fire": body.style.background = "linear-gradient(180deg,#220000,#661100)"; break;
-        case "forest": body.style.background = "linear-gradient(180deg,#021,#041)"; break;
-        case "blood": body.style.background = "linear-gradient(180deg,#100,#400)"; break;
-        case "neon": body.style.background = "linear-gradient(135deg,#111,#000)"; break;
-        case "aurora": body.style.background = "linear-gradient(135deg,#0a1a2a,#1a0a2a)"; break;
-        case "galaxy": body.style.background = "radial-gradient(circle,#1a0033,#000)"; break;
-        case "sunrise": body.style.background = "linear-gradient(180deg,#ff6b35,#2c3e50)"; break;
-        case "arctic": body.style.background = "linear-gradient(180deg,#e0f0ff,#b0d0ff)"; break;
-    }
-    saveData("bg", currentBG);
-}
-
-// ========== ACHIEVEMENT SYSTEM (v2.0 FEATURE) ==========
-function checkAchievements() {
-    var newAchievements = [];
-    
-    if (!achievements.firstPlay && totalViews >= 1) {
-        achievements.firstPlay = true;
-        newAchievements.push("🎮 First Play!");
-    }
-    if (!achievements.tenPlays && totalViews >= 10) {
-        achievements.tenPlays = true;
-        newAchievements.push("🔥 10 Plays Milestone!");
-    }
-    if (!achievements.favoriteFive && favorites.length >= 5) {
-        achievements.favoriteFive = true;
-        newAchievements.push("⭐ Collector: 5 Favorites!");
-    }
-    if (!achievements.ratingMaster && Object.keys(ratings).length >= 5) {
-        achievements.ratingMaster = true;
-        newAchievements.push("⭐ Rating Master!");
-    }
-    var totalTime = 0;
-    for (var key in playTimeData) {
-        totalTime += playTimeData[key];
-    }
-    if (!achievements.playTime1h && totalTime >= 3600) {
-        achievements.playTime1h = true;
-        newAchievements.push("⏱️ 1 Hour Playtime!");
-    }
-    if (!achievements.gameCollector && games.length >= 10) {
-        achievements.gameCollector = true;
-        newAchievements.push("🎯 Game Collector: 10 Games!");
-    }
-    
-    for (var i = 0; i < newAchievements.length; i++) {
-        showAchievementPopup(newAchievements[i]);
-    }
-    if (newAchievements.length > 0) {
-        saveData('achievements', achievements);
+function drawStarfield(){
+    for(var i=0;i<starfieldStars.length;i+=3){
+        var s=starfieldStars[i];ctx.beginPath();ctx.arc(s.x%canvas.width,s.y%canvas.height,s.size*0.7,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,'+(0.15+Math.sin(Date.now()*s.speed+s.phase)*0.1)+')';ctx.fill();
     }
 }
 
-function showAchievementPopup(text) {
-    var popup = document.createElement('div');
-    popup.className = 'achievement-popup';
-    popup.textContent = text;
-    document.body.appendChild(popup);
-    setTimeout(function() { popup.remove(); }, 5000);
-}
-
-function showAchievements() {
-    document.getElementById('achievementsOverlay').style.display = 'flex';
-    var list = document.getElementById('achievementsList');
-    var allAchievements = [
-        { key: 'firstPlay', name: 'First Play', desc: 'Play your first game', icon: '🎮' },
-        { key: 'tenPlays', name: '10 Plays', desc: 'Play games 10 times', icon: '🔥' },
-        { key: 'favoriteFive', name: 'Collector', desc: 'Favorite 5 games', icon: '⭐' },
-        { key: 'ratingMaster', name: 'Rating Master', desc: 'Rate 5 games', icon: '⭐' },
-        { key: 'playTime1h', name: 'Dedicated', desc: 'Play for 1 hour total', icon: '⏱️' },
-        { key: 'gameCollector', name: 'Game Collector', desc: 'Have 10 games in hub', icon: '🎯' },
-        { key: 'miniGameCreator', name: 'Mini-Game Creator', desc: 'Generate a mini-game with AI', icon: '🤖' }
-    ];
-    var html = '';
-    for (var i = 0; i < allAchievements.length; i++) {
-        var a = allAchievements[i];
-        var unlocked = achievements[a.key];
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;margin:5px 0;' + (unlocked ? 'border:1px solid #ffd700;' : 'opacity:0.5;') + '">';
-        html += '<span style="font-size:24px;">' + a.icon + '</span>';
-        html += '<div><b>' + a.name + '</b><br><small>' + a.desc + '</small></div>';
-        html += '<span style="margin-left:auto;">' + (unlocked ? '✅' : '🔒') + '</span>';
-        html += '</div>';
+function animateBG(){
+    switch(currentBG){
+        case'matrix':drawMatrixBG();break;case'stars':drawStarsBG();break;
+        case'aurora':drawAuroraBG();break;case'galaxy':drawGalaxyBG();break;
+        case'sunrise':drawSunriseBG();break;case'neon':drawNeonCity();break;
+        case'fireice':drawFireIceClash();break;
+        default:drawDefaultBG();
     }
-    list.innerHTML = html;
+    requestAnimationFrame(animateBG);
 }
 
-function closeAchievements() {
-    document.getElementById('achievementsOverlay').style.display = 'none';
+function changeBG(){currentBG=document.getElementById("bgSelect").value;var body=document.body;body.style.background="#050505";
+    var bgColors={matrix:"#001100",stars:"#0a0a15",sunset:"#2a1030",purple:"#0f0020",ocean:"#001a2a",fire:"#1a0000",forest:"#001a00",blood:"#1a0005",neon:"#0a0a0a",aurora:"#0a0f1a",galaxy:"#0a0020",sunrise:"#1a0a20",arctic:"#e8f4ff",fireice:"#0a0005"};
+    if(bgColors[currentBG])body.style.background=bgColors[currentBG];
+    saveData("bg",currentBG);saveData("unlockedBackgrounds",unlockedBackgrounds);
 }
 
-// ========== CUSTOM CATEGORIES ==========
-function renderCategories() {
-    var container = document.getElementById('categoryFilters');
-    var html = '<span class="category-tag active" onclick="filterByCategory(\'all\', this)">🎯 All</span>';
-    html += '<span class="category-tag" onclick="filterByCategory(\'favorites\', this)">⭐ Favorites</span>';
-    html += '<span class="category-tag" onclick="filterByCategory(\'recent\', this)">🕐 Recent</span>';
-    html += '<span class="category-tag" onclick="filterByCategory(\'mostPlayed\', this)">🔥 Popular</span>';
-    for (var i = 0; i < customCategories.length; i++) {
-        var cat = customCategories[i];
-        html += '<span class="category-tag" onclick="filterByCategory(\'' + cat.toLowerCase() + '\', this)">' + cat + ' <button class="delete-category-btn" onclick="event.stopPropagation(); deleteCategory(\'' + cat + '\')">✕</button></span>';
+// ============ EMOJI SYSTEM ============
+var emojiSets={gaming:["🎮","🕹️","👾","🎯","🎲","🎪","🏆","💎","⭐","🔥","⚡","🎭"],nature:["🌿","🌸","🌺","🍃","🌻","🦋","🌈","💧","🌙","☀️","🌊","🍀"],space:["🚀","🌍","⭐","🌙","☄️","🛸","💫","🌟","🌌","🪐","🔭","✨"],party:["🎉","🎊","🥳","🎈","🎵","💃","🕺","🎶","🍾","🎂","🎁","🥂"],random:["🐱","🐶","🦄","🍕","🌈","🎸","📚","🧩","🎨","🧸","🌮","🦋"]};
+var activeEmojis=[];
+
+function spawnEmoji(){
+    if(document.hidden)return;
+    var set=emojiSets[currentEmojiTheme]||emojiSets.gaming;
+    var emoji=set[Math.floor(Math.random()*set.length)];
+    var el=document.createElement('div');el.className='emoji-float';el.textContent=emoji;
+    el.style.left=Math.random()*95+'vw';el.style.animationDuration=(Math.random()*8+8)+'s';
+    el.style.fontSize=(Math.random()*20+20)+'px';el.style.animationDelay='0s';
+    document.getElementById('emojiContainer').appendChild(el);
+    activeEmojis.push(el);
+    if(activeEmojis.length>25){var old=activeEmojis.shift();if(old)old.remove();}
+    setTimeout(function(){el.remove();activeEmojis=activeEmojis.filter(function(e){return e!==el;});},(parseFloat(el.style.animationDuration)||12)*1000);
+}
+
+function changeEmojiTheme(){currentEmojiTheme=document.getElementById("emojiTheme").value;saveData("emojiTheme",currentEmojiTheme);}
+
+// ============ ACHIEVEMENT SYSTEM ============
+function checkAchievements(){
+    var na=[];
+    if(!achievements.firstPlay&&totalViews>=1){achievements.firstPlay=true;na.push("🎮 First Play!");}
+    if(!achievements.tenPlays&&totalViews>=10){achievements.tenPlays=true;na.push("🔥 10 Plays!");}
+    if(!achievements.favoriteFive&&favorites.length>=5){achievements.favoriteFive=true;na.push("⭐ 5 Favorites!");}
+    if(!achievements.ratingMaster&&Object.keys(ratings).length>=5){achievements.ratingMaster=true;na.push("⭐ Rating Master!");}
+    var tt=0;for(var k in playTimeData)tt+=playTimeData[k];
+    if(!achievements.playTime1h&&tt>=3600){achievements.playTime1h=true;na.push("⏱️ 1 Hour!");}
+    if(!achievements.gameCollector&&games.length>=10){achievements.gameCollector=true;na.push("🎯 10 Games!");}
+    var allRated=games.length>0&&games.every(function(g,i){return ratings[i]&&ratings[i]>=4;});
+    if(!achievements.allStar&&allRated&&games.length>=3){achievements.allStar=true;na.push("🌟 All Star Rater!");}
+    if(!achievements.backgroundUnlock1&&Object.values(achievements).filter(function(a){return a;}).length>=3&&unlockedBackgrounds.indexOf("fireice")===-1){
+        achievements.backgroundUnlock1=true;unlockedBackgrounds.push("fireice");unlockedBackgrounds.push("neon");na.push("🔓 Fire & Ice BG Unlocked!");}
+    if(!achievements.backgroundUnlock2&&Object.values(achievements).filter(function(a){return a;}).length>=5&&unlockedBackgrounds.indexOf("galaxy")===-1){
+        achievements.backgroundUnlock2=true;unlockedBackgrounds.push("galaxy");unlockedBackgrounds.push("aurora");na.push("🔓 Galaxy BG Unlocked!");}
+    na.forEach(function(a){showAchievementPopup(a);});
+    if(na.length>0){saveData('achievements',achievements);saveData('unlockedBackgrounds',unlockedBackgrounds);populateBGSelect();}
+}
+
+function showAchievementPopup(text){
+    var p=document.createElement('div');p.className='achievement-popup';p.textContent=text;
+    document.body.appendChild(p);setTimeout(function(){p.remove();},5500);
+}
+
+function showAchievements(){
+    document.getElementById('achievementsOverlay').style.display='flex';
+    var all=[{key:'firstPlay',name:'First Play',desc:'Play your first game',icon:'🎮'},{key:'tenPlays',name:'10 Plays',desc:'Play 10 times',icon:'🔥'},{key:'favoriteFive',name:'Collector',desc:'Favorite 5 games',icon:'⭐'},{key:'ratingMaster',name:'Rating Master',desc:'Rate 5 games',icon:'⭐'},{key:'playTime1h',name:'Dedicated',desc:'1 hour playtime',icon:'⏱️'},{key:'gameCollector',name:'Game Collector',desc:'10 games in hub',icon:'🎯'},{key:'miniGameCreator',name:'Mini-Game Creator',desc:'Generate mini-game',icon:'🤖'},{key:'allStar',name:'All Star Rater',desc:'Rate all games 4+',icon:'🌟'},{key:'backgroundUnlock1',name:'BG Unlocker',desc:'Unlock Fire & Ice',icon:'🔓'},{key:'backgroundUnlock2',name:'BG Master',desc:'Unlock Galaxy theme',icon:'🌌'}];
+    document.getElementById('achievementsList').innerHTML=all.map(function(a){var u=achievements[a.key];return'<div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,'+(u?'0.08':'0.03')+');border-radius:12px;margin:6px 0;'+(u?'border:2px solid #ffd700;':'opacity:0.6;')+'"><span style="font-size:28px;">'+a.icon+'</span><div><b>'+a.name+'</b><br><small>'+a.desc+'</small></div><span style="margin-left:auto;font-size:20px;">'+(u?'✅':'🔒')+'</span></div>';}).join('');
+}
+function closeAchievements(){document.getElementById('achievementsOverlay').style.display='none';}
+
+// ============ AI IMAGE SEARCH ============
+function aiFindImage(){
+    var title=document.getElementById('title').value.trim();
+    if(!title){showToast("Enter a game title first!","error");return;}
+    var query=encodeURIComponent(title+' game screenshot');
+    var url='https://source.unsplash.com/400x200/?'+encodeURIComponent(title+' game');
+    document.getElementById('image').value=url;
+    showToast("🤖 AI found an image for '"+title+"'! (Unsplash)");
+    // Also try to provide a direct search link
+    var messages=document.getElementById('aiMessages');
+    messages.innerHTML+='<div class="ai-message bot">🖼️ Image for "'+escapeHtml(title)+'":<br><a href="https://www.google.com/search?tbm=isch&q='+query+'" target="_blank" style="color:#00aaff;">Click to search Google Images</a><br>Or use this direct URL:<br><small style="color:#0f0;">'+url+'</small></div>';
+    messages.scrollTop=messages.scrollHeight;
+}
+
+// ============ POPULATE BG SELECT ============
+function populateBGSelect(){
+    var sel=document.getElementById('bgSelect');
+    var allBGs=[{v:'default',n:'🌌 Default Cosmic'},{v:'matrix',n:'💚 Matrix Rain'},{v:'stars',n:'⭐ Starry Night'},{v:'sunset',n:'🌅 Sunset Glow'},{v:'purple',n:'💜 Purple Void'},{v:'ocean',n:'🌊 Deep Ocean'},{v:'fire',n:'🔥 Fire Storm'},{v:'forest',n:'🌲 Mystic Forest'},{v:'blood',n:'🩸 Blood Moon'},{v:'arctic',n:'❄️ Arctic Frost'},{v:'sunrise',n:'🌄 Golden Sunrise'},{v:'neon',n:'🏙️ Neon City','locked':true},{v:'aurora',n:'🌠 Aurora Waves','locked':true},{v:'galaxy',n:'🌌 Spiral Galaxy','locked':true},{v:'fireice',n:'⚔️ Fire vs Ice','locked':true}];
+    sel.innerHTML=allBGs.map(function(bg){var locked=bg.locked&&unlockedBackgrounds.indexOf(bg.v)===-1;return'<option value="'+bg.v+'"'+(bg.v===currentBG?' selected':'')+(locked?' disabled':'')+'>'+(locked?'🔒 ':'')+bg.n+(locked?' (Locked)':'')+'</option>';}).join('');
+}
+
+// ============ CUSTOM CATEGORIES ============
+function renderCategories(){
+    var c=document.getElementById('categoryFilters');
+    c.innerHTML='<span class="category-tag'+(currentFilter==='all'?' active':'')+'" onclick="filterByCategory(\'all\',this)">🎯 All</span><span class="category-tag'+(currentFilter==='favorites'?' active':'')+'" onclick="filterByCategory(\'favorites\',this)">⭐ Favorites</span><span class="category-tag'+(currentFilter==='recent'?' active':'')+'" onclick="filterByCategory(\'recent\',this)">🕐 Recent</span><span class="category-tag'+(currentFilter==='mostPlayed'?' active':'')+'" onclick="filterByCategory(\'mostPlayed\',this)">🔥 Popular</span>';
+    customCategories.forEach(function(cat){c.innerHTML+='<span class="category-tag" onclick="filterByCategory(\''+cat.toLowerCase()+'\',this)">'+cat+' <button class="delete-category-btn" onclick="event.stopPropagation();deleteCategory(\''+cat+'\')">✕</button></span>';});
+    c.innerHTML+='<span class="add-category-btn" onclick="addCustomCategory()">➕ Add</span>';
+}
+function addCustomCategory(){var n=prompt('Category name:');if(n&&customCategories.indexOf(n)===-1){customCategories.push(n);saveData('customCategories',customCategories);renderCategories();showToast('✅ Created!');}}
+function createCustomCategory(){var n=document.getElementById('newCategoryName').value.trim();if(n&&customCategories.indexOf(n)===-1){customCategories.push(n);document.getElementById('newCategoryName').value='';saveData('customCategories',customCategories);renderCategories();updateAdminCategories();showToast('✅ Created!');}}
+function deleteCategory(n){if(confirm('Delete "'+n+'"?')){customCategories=customCategories.filter(function(c){return c!==n;});saveData('customCategories',customCategories);renderCategories();filterGames();updateAdminCategories();}}
+
+// ============ YOUTUBE/MP4 ============
+function toggleCodeInput(){var t=document.getElementById('gameType').value;document.getElementById('code').style.display=t==='html'?'block':'none';document.getElementById('codeLabel').style.display=t==='html'?'block':'none';document.getElementById('youtubeUrl').style.display=t==='youtube'?'block':'none';document.getElementById('mp4Url').style.display=t==='mp4'?'block':'none';}
+function getYouTubeID(u){var m=u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|embed\/)([^&\s]+)/);return m?m[1]:null;}
+
+// ============ LEADERBOARD ============
+function updateGameLeaderboard(i,t){if(!gameLeaderboards[i])gameLeaderboards[i]=[];gameLeaderboards[i].push({time:t,date:new Date().toISOString(),profile:'Player'});gameLeaderboards[i].sort(function(a,b){return b.time-a.time;});if(gameLeaderboards[i].length>10)gameLeaderboards[i].length=10;saveData('gameLeaderboards',gameLeaderboards);}
+function getGameLeaderboard(i){return(gameLeaderboards[i]||[]).slice(0,5);}
+
+// ============ TIMER ============
+var playStart=null,currentGI=null,timerInt=null,accTime=0;
+function startPlayTimer(i){stopPlayTimer();currentGI=i;playStart=Date.now();accTime=playTimeData['game_'+i]||0;timerInt=setInterval(function(){if(currentGI!==null&&playStart){var e=Math.floor((Date.now()-playStart)/1000);var t=accTime+e;playTimeData['game_'+currentGI]=t;if(!personalBests['game_'+currentGI]||t>personalBests['game_'+currentGI])personalBests['game_'+currentGI]=t;if(e%10===0&&e>0)updateGameLeaderboard(currentGI,t);if(e%5===0)saveAll();}},1000);}
+function stopPlayTimer(){if(timerInt){clearInterval(timerInt);timerInt=null;}if(currentGI!==null&&playStart){var e=Math.floor((Date.now()-playStart)/1000);var t=accTime+e;playTimeData['game_'+currentGI]=t;if(!personalBests['game_'+currentGI]||t>personalBests['game_'+currentGI])personalBests['game_'+currentGI]=t;updateGameLeaderboard(currentGI,t);saveAll();}currentGI=null;playStart=null;accTime=0;}
+
+// ============ AI ============
+function toggleAI(){document.getElementById('aiChat').classList.toggle('active');}
+function sendAIMessage(){
+    var inp=document.getElementById('aiInput');var msg=inp.value.trim();if(!msg)return;
+    var msgs=document.getElementById('aiMessages');msgs.innerHTML+='<div class="ai-message user">'+escapeHtml(msg)+'</div>';inp.value='';msgs.scrollTop=msgs.scrollHeight;
+    setTimeout(function(){msgs.innerHTML+='<div class="ai-message bot">'+generateAIResponse(msg)+'</div>';msgs.scrollTop=msgs.scrollHeight;},400);
+}
+function generateAIResponse(msg){
+    var l=msg.toLowerCase();
+    if(l.indexOf('find image')!==-1||l.indexOf('get image')!==-1||l.indexOf('picture for')!==-1){
+        var title=msg.replace(/find image for|get image for|picture for/gi,'').trim();
+        if(!title){var gi=games.slice(-1)[0];title=gi?gi.title:'game';}
+        var url='https://source.unsplash.com/400x200/?'+encodeURIComponent(title+' game');
+        return'🖼️ Image for "<b>'+escapeHtml(title)+'</b>":<br><img src="'+url+'" style="width:100%;border-radius:8px;margin:5px 0;" onerror="this.style.display=\'none\'"><br><small style="color:#0f0;">URL: '+url+'</small><br><a href="https://www.google.com/search?tbm=isch&q='+encodeURIComponent(title+' game')+'" target="_blank" style="color:#00aaff;">🔍 More on Google Images</a>';
     }
-    html += '<span class="add-category-btn" onclick="addCustomCategory()">➕ Add</span>';
-    container.innerHTML = html;
+    if(l.indexOf('mini game')!==-1||l.indexOf('generate')!==-1){achievements.miniGameCreator=true;saveData('achievements',achievements);checkAchievements();return'🎮 Mini-Game Idea: <b>Speed Clicker!</b><br><textarea style="width:100%;height:80px;background:#111;color:#0f0;border:1px solid #333;font-size:10px;padding:5px;" readonly>&lt;button onclick="c++" style="font-size:60px;padding:40px;"&gt;CLICK&lt;/button&gt;&lt;h1 id="s"&gt;0&lt;/h1&gt;&lt;script&gt;var c=0;setInterval(function(){document.getElementById("s").innerText=c},50);setTimeout(function(){alert("Score: "+c)},10000)&lt;/script&gt;</textarea><br>Copy this into Admin → HTML Game!';}
+    if(l.indexOf('recommend')!==-1){var top=games.map(function(g,i){return{t:g.title,r:ratings[i]||0};}).sort(function(a,b){return b.r-a.r;}).slice(0,3);return top.length?'🎯 Try: '+top.map(function(g){var s='';for(var i=0;i<g.r;i++)s+='★';return g.t+' ('+s+')';}).join(', '):'Add some games first!';}
+    if(l.indexOf('help')!==-1)return'💡 I can: find images, recommend games, generate mini-games, show stats, track achievements, and more! Try "find image for snake game" or "recommend games".';
+    return'🤔 Try: "find image for [title]", "recommend games", "generate mini game", or "help"!';
 }
 
-function addCustomCategory() {
-    var name = prompt('Enter new category name:');
-    if (name && customCategories.indexOf(name) === -1) {
-        customCategories.push(name);
-        saveData('customCategories', customCategories);
-        renderCategories();
-        showToast('✅ Category "' + name + '" created!');
-    }
-}
+// ============ UTILS ============
+function formatPlayTime(s){if(!s)return'0min';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?h+'h '+m+'min':m+'min';}
+function escapeHtml(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg,type){type=type||'success';var c=document.getElementById('toastContainer');var t=document.createElement('div');t.className='toast '+type;t.textContent=msg;c.appendChild(t);setTimeout(function(){t.style.animation='slideOut 0.3s ease-out';setTimeout(function(){t.remove();},300);},3000);}
+function saveAll(){saveData("games",games);saveData("totalViews",totalViews);saveData("playTimeData",playTimeData);saveData("personalBests",personalBests);saveData("ratings",ratings);saveData("favorites",favorites);saveData("gameTags",gameTags);saveData("recentlyPlayed",recentlyPlayed);saveData("updatedGames",updatedGames);saveData("gameLeaderboards",gameLeaderboards);saveData("customCategories",customCategories);saveData("gameTypes",gameTypes);saveData("achievements",achievements);saveData("unlockedBackgrounds",unlockedBackgrounds);document.getElementById("totalGames").innerText=games.length;document.getElementById("totalViews").innerText=totalViews;checkAchievements();}
 
-function createCustomCategory() {
-    var name = document.getElementById('newCategoryName').value.trim();
-    if (name && customCategories.indexOf(name) === -1) {
-        customCategories.push(name);
-        document.getElementById('newCategoryName').value = '';
-        saveData('customCategories', customCategories);
-        renderCategories();
-        showToast('✅ Category "' + name + '" created!');
-    }
-}
+// ============ KEYBOARD ============
+document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.getElementById('searchInput').focus();}if(e.ctrlKey&&e.key==='s'){e.preventDefault();openStats();}if(e.ctrlKey&&e.key==='e'){e.preventDefault();openSettings();}if(e.key==='Escape'){closeStats();closeAdmin();closeSettings();closeAchievements();}});
 
-function deleteCategory(name) {
-    if (confirm('Delete category "' + name + '"?')) {
-        customCategories = customCategories.filter(function(c) { return c !== name; });
-        saveData('customCategories', customCategories);
-        renderCategories();
-        filterGames();
-        showToast('🗑️ Category "' + name + '" deleted');
-    }
-}
+// ============ AUTH ============
+function login(){var v=document.getElementById("pass").value;if(adminPasswords.indexOf(v)!==-1){unlocked=true;sessionStorage.setItem("admin","true");document.getElementById("loginOverlay").style.display="none";document.getElementById("adminPanel").classList.add("active");showToast("✅ Unlocked!");}else{showToast("❌ Wrong password!","error");}}
+function toggleAdmin(){if(!unlocked){document.getElementById("loginOverlay").style.display="flex";return;}document.getElementById("adminPanel").classList.toggle("active");}
+function closeAdmin(){document.getElementById("adminPanel").classList.remove("active");}
 
-// ========== YOUTUBE & MP4 SUPPORT ==========
-function toggleCodeInput() {
-    var type = document.getElementById('gameType').value;
-    document.getElementById('code').style.display = type === 'html' ? 'block' : 'none';
-    document.getElementById('youtubeUrl').style.display = type === 'youtube' ? 'block' : 'none';
-    document.getElementById('mp4Url').style.display = type === 'mp4' ? 'block' : 'none';
-}
+// ============ SETTINGS ============
+function openSettings(){document.getElementById('settingsOverlay').style.display='flex';document.getElementById('exportCode').value=btoa(encodeURIComponent(JSON.stringify({games:games,playTimeData:playTimeData,personalBests:personalBests,ratings:ratings,favorites:favorites,gameTags:gameTags,gameLeaderboards:gameLeaderboards,customCategories:customCategories,gameTypes:gameTypes,achievements:achievements,unlockedBackgrounds:unlockedBackgrounds})));populateBGSelect();document.getElementById('emojiTheme').value=currentEmojiTheme;}
+function closeSettings(){document.getElementById('settingsOverlay').style.display='none';}
+function copyExportCode(){document.getElementById('exportCode').select();document.execCommand("copy");showToast("✅ Copied!");}
+function importGames(){var c=document.getElementById("importCode").value.trim();if(!c){showToast("❌ Paste code!","error");return;}try{var d=JSON.parse(decodeURIComponent(atob(c)));if(document.getElementById("replaceExisting").checked){games=d.games||[];playTimeData=d.playTimeData||{};ratings=d.ratings||{};favorites=d.favorites||[];gameTags=d.gameTags||{};gameLeaderboards=d.gameLeaderboards||{};customCategories=d.customCategories||[];gameTypes=d.gameTypes||{};achievements=d.achievements||achievements;unlockedBackgrounds=d.unlockedBackgrounds||unlockedBackgrounds;}else{games=games.concat(d.games||[]);Object.assign(playTimeData,d.playTimeData||{});Object.assign(ratings,d.ratings||{});favorites=[...new Set(favorites.concat(d.favorites||[]))];Object.assign(gameTags,d.gameTags||{});Object.assign(gameLeaderboards,d.gameLeaderboards||{});customCategories=[...new Set(customCategories.concat(d.customCategories||[]))];Object.assign(gameTypes,d.gameTypes||{});if(d.achievements)Object.assign(achievements,d.achievements);if(d.unlockedBackgrounds)unlockedBackgrounds=[...new Set(unlockedBackgrounds.concat(d.unlockedBackgrounds))];}saveAll();render();renderCategories();populateBGSelect();filterGames();showToast("✅ Imported!");}catch(e){showToast("❌ Invalid code","error");}}
 
-function getYouTubeID(url) {
-    var match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
-    return match ? match[1] : null;
-}
+// ============ STATS ============
+function openStats(){document.getElementById('statsOverlay').style.display='flex';document.getElementById('statsDashboard').style.display='block';document.getElementById('statTotalGames').innerText=games.length;document.getElementById('statTotalPlays').innerText=totalViews;var tt=0;for(var k in playTimeData)tt+=playTimeData[k];document.getElementById('statTotalTime').innerText=formatPlayTime(tt);var mp=games.reduce(function(m,g){return(g.views||0)>(m.views||0)?g:m;},games[0]);document.getElementById('statMostPlayed').innerText=mp?mp.title:'-';var ar=Object.values(ratings).filter(function(r){return r>0;});document.getElementById('statAvgRating').innerText=ar.length?(ar.reduce(function(a,b){return a+b;},0)/ar.length).toFixed(1):'-';document.getElementById('statAchievements').innerText=Object.values(achievements).filter(function(a){return a;}).length+'/10';}
+function closeStats(){document.getElementById('statsOverlay').style.display='none';document.getElementById('statsDashboard').style.display='none';}
 
-// ========== ADAPTIVE LEADERBOARD ==========
-function updateGameLeaderboard(gameIndex, playTime) {
-    if (!gameLeaderboards[gameIndex]) gameLeaderboards[gameIndex] = [];
-    var lb = gameLeaderboards[gameIndex];
-    lb.push({
-        time: playTime,
-        date: new Date().toISOString(),
-        profile: 'Player'
+// ============ FILTERS ============
+var currentFilter='all';
+function filterByCategory(cat,el){currentFilter=cat;document.querySelectorAll('.category-tag').forEach(function(t){t.classList.remove('active');});if(el)el.classList.add('active');filterGames();}
+function filterGames(){
+    var term=document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.card').forEach(function(card){
+        var idx=parseInt(card.dataset.index);var g=games[idx];if(!g){card.style.display='none';return;}
+        var tags=gameTags[idx]||[];var ms=(g.title||'').toLowerCase().indexOf(term)!==-1||(g.desc||'').toLowerCase().indexOf(term)!==-1||tags.some(function(t){return t.toLowerCase().indexOf(term)!==-1;});
+        var mf=true;if(currentFilter==='favorites')mf=favorites.indexOf(idx)!==-1;
+        else if(currentFilter==='recent')mf=recentlyPlayed.indexOf(idx)!==-1;
+        else if(currentFilter==='mostPlayed'){var s=games.slice().sort(function(a,b){return(b.views||0)-(a.views||0);}).slice(0,10);mf=s.indexOf(g)!==-1;}
+        else if(currentFilter!=='all')mf=tags.map(function(t){return t.toLowerCase();}).indexOf(currentFilter.toLowerCase())!==-1;
+        card.style.display=ms&&mf?'block':'none';
     });
-    lb.sort(function(a, b) { return b.time - a.time; });
-    if (lb.length > 10) lb.length = 10;
-    gameLeaderboards[gameIndex] = lb;
-    saveData('gameLeaderboards', gameLeaderboards);
 }
+function addToRecentlyPlayed(i){recentlyPlayed=recentlyPlayed.filter(function(r){return r!==i;});recentlyPlayed.unshift(i);if(recentlyPlayed.length>10)recentlyPlayed.pop();saveData('recentlyPlayed',recentlyPlayed);updateRecentlyPlayed();}
+function updateRecentlyPlayed(){document.getElementById('recentList').innerHTML=recentlyPlayed.map(function(i){return games[i]?'<span class="recent-game-chip" onclick="play('+i+')">🎮 '+escapeHtml(games[i].title.substring(0,15))+'</span>':'';}).join('');}
 
-function getGameLeaderboard(gameIndex) {
-    return (gameLeaderboards[gameIndex] || []).slice(0, 5);
-}
+// ============ FAVORITES & RATINGS ============
+function toggleFavorite(i,event){event.stopPropagation();if(favorites.indexOf(i)!==-1)favorites=favorites.filter(function(f){return f!==i;});else favorites.push(i);saveAll();render();filterGames();}
+function rateGame(i,r,event){event.stopPropagation();ratings[i]=r;saveAll();render();}
 
-// ========== IMPROVED TIMER ==========
-var playStartTime = null;
-var currentGameIndex = null;
-var playTimeInterval = null;
-var accumulatedTime = 0;
-
-function startPlayTimer(gameIndex) {
-    stopPlayTimer();
-    currentGameIndex = gameIndex;
-    playStartTime = Date.now();
-    accumulatedTime = playTimeData['game_' + gameIndex] || 0;
-    playTimeInterval = setInterval(function() {
-        if (currentGameIndex !== null && playStartTime) {
-            var elapsed = Math.floor((Date.now() - playStartTime) / 1000);
-            var total = accumulatedTime + elapsed;
-            playTimeData['game_' + currentGameIndex] = total;
-            if (!personalBests['game_' + currentGameIndex] || total > personalBests['game_' + currentGameIndex]) {
-                personalBests['game_' + currentGameIndex] = total;
-            }
-            if (elapsed % 10 === 0 && elapsed > 0) {
-                updateGameLeaderboard(currentGameIndex, total);
-            }
-            if (elapsed % 5 === 0) saveAll();
-        }
-    }, 1000);
-}
-
-function stopPlayTimer() {
-    if (playTimeInterval) {
-        clearInterval(playTimeInterval);
-        playTimeInterval = null;
-    }
-    if (currentGameIndex !== null && playStartTime) {
-        var elapsed = Math.floor((Date.now() - playStartTime) / 1000);
-        var total = accumulatedTime + elapsed;
-        playTimeData['game_' + currentGameIndex] = total;
-        if (!personalBests['game_' + currentGameIndex] || total > personalBests['game_' + currentGameIndex]) {
-            personalBests['game_' + currentGameIndex] = total;
-        }
-        updateGameLeaderboard(currentGameIndex, total);
-        saveAll();
-    }
-    currentGameIndex = null;
-    playStartTime = null;
-    accumulatedTime = 0;
-}
-
-// ========== AI ASSISTANT (ENHANCED) ==========
-function toggleAI() {
-    document.getElementById('aiChat').classList.toggle('active');
-}
-
-function sendAIMessage() {
-    var input = document.getElementById('aiInput');
-    var msg = input.value.trim();
-    if (!msg) return;
-    var messages = document.getElementById('aiMessages');
-    messages.innerHTML += '<div class="ai-message user">' + escapeHtml(msg) + '</div>';
-    input.value = '';
-    messages.scrollTop = messages.scrollHeight;
-    setTimeout(function() {
-        var response = generateAIResponse(msg);
-        messages.innerHTML += '<div class="ai-message bot">' + response + '</div>';
-        messages.scrollTop = messages.scrollHeight;
-    }, 500);
-}
-
-function generateAIResponse(msg) {
-    var lower = msg.toLowerCase();
-    
-    if (lower.indexOf('mini game') !== -1 || lower.indexOf('generate game') !== -1 || lower.indexOf('create game') !== -1) {
-        achievements.miniGameCreator = true;
-        saveData('achievements', achievements);
-        checkAchievements();
-        return '🎮 Here\'s a mini-game idea! Try this "Speed Clicker": Count clicks in 10 seconds. I can even generate the HTML code for you! Just ask "generate speed clicker code".';
-    }
-    
-    if (lower.indexOf('speed clicker code') !== -1 || lower.indexOf('clicker html') !== -1) {
-        return 'Here\'s a Speed Clicker HTML game:<br><textarea style="width:100%;height:100px;background:#1a1a1a;color:#0f0;border:1px solid #333;padding:5px;font-size:10px;" readonly>&lt;button onclick="clicks++" style="font-size:50px;padding:30px;"&gt;Click!&lt;/button&gt;&lt;p id="score"&gt;0&lt;/p&gt;&lt;script&gt;let clicks=0;setInterval(()=&gt;{document.getElementById(\'score\').innerText=clicks},100);setTimeout(()=&gt;{alert(\'Final: \'+clicks)},10000);&lt;/script&gt;</textarea><br>Copy this into the admin panel as an HTML game!';
-    }
-    
-    if (lower.indexOf('recommend') !== -1 || lower.indexOf('suggest') !== -1) {
-        var topRated = games.map(function(g, i) {
-            return { title: g.title, rating: ratings[i] || 0 };
-        }).sort(function(a, b) { return b.rating - a.rating; }).slice(0, 3);
-        if (topRated.length > 0) {
-            var recs = '';
-            for (var i = 0; i < topRated.length; i++) {
-                recs += '🎮 ' + topRated[i].title + ' (';
-                for (var j = 0; j < topRated[i].rating; j++) recs += '★';
-                recs += ')';
-                if (i < topRated.length - 1) recs += ', ';
-            }
-            return 'I recommend: ' + recs;
-        }
-        return "Try adding some games first! Then I can give better recommendations.";
-    }
-    
-    if (lower.indexOf('popular') !== -1 || lower.indexOf('most played') !== -1) {
-        var popular = games.slice().sort(function(a, b) { return (b.views || 0) - (a.views || 0); }).slice(0, 3);
-        if (popular.length > 0) {
-            var popList = '';
-            for (var i = 0; i < popular.length; i++) {
-                popList += '🎮 ' + popular[i].title + ' (' + (popular[i].views || 0) + ' plays)';
-                if (i < popular.length - 1) popList += ', ';
-            }
-            return 'Most played: ' + popList;
-        }
-        return "No games played yet!";
-    }
-    
-    if (lower.indexOf('category') !== -1 || lower.indexOf('categories') !== -1) {
-        return 'Available categories: ' + customCategories.join(', ') + '. You can also create custom categories!';
-    }
-    
-    if (lower.indexOf('achievement') !== -1) {
-        var unlocked = 0;
-        for (var key in achievements) {
-            if (achievements[key]) unlocked++;
-        }
-        return '🏆 You\'ve unlocked ' + unlocked + '/7 achievements! Type "show achievements" to see them.';
-    }
-    
-    if (lower.indexOf('total') !== -1 || lower.indexOf('stats') !== -1) {
-        var totalTime = 0;
-        for (var key in playTimeData) totalTime += playTimeData[key];
-        return '📊 Stats: ' + games.length + ' games, ' + totalViews + ' total plays, ' + formatPlayTime(totalTime) + ' total play time.';
-    }
-    
-    if (lower.indexOf('help') !== -1 || lower.indexOf('what can you do') !== -1) {
-        return "I can: 🎮 Recommend games, 🤖 Generate mini-games, 📊 Show stats, 🔍 Find games by category, 💡 Give tips, 🏆 Track achievements, and more!";
-    }
-    
-    var responses = [
-        "That's interesting! Try searching for games using the search bar or category filters.",
-        "I'm here to help! Ask me to find games, show stats, or give recommendations.",
-        "Did you know? You can create custom categories and add YouTube videos!",
-        "Tip: Use keyboard shortcuts! Ctrl+K to search, Ctrl+S for stats.",
-        "You can rate games and build a leaderboard for each game!",
-        "Try asking me to generate a mini-game idea!"
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-}
-
-// ========== UTILS ==========
-function formatPlayTime(s) {
-    if (!s) return '0min';
-    var h = Math.floor(s / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    return h > 0 ? h + 'h ' + m + 'min' : m + 'min';
-}
-
-function escapeHtml(s) {
-    if (!s) return '';
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function showToast(msg, type) {
-    type = type || 'success';
-    var container = document.getElementById('toastContainer');
-    var toast = document.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(function() {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(function() { toast.remove(); }, 300);
-    }, 3000);
-}
-
-function saveAll() {
-    saveData("games", games);
-    saveData("totalViews", totalViews);
-    saveData("playTimeData", playTimeData);
-    saveData("personalBests", personalBests);
-    saveData("ratings", ratings);
-    saveData("favorites", favorites);
-    saveData("gameTags", gameTags);
-    saveData("comments", comments);
-    saveData("recentlyPlayed", recentlyPlayed);
-    saveData("updatedGames", updatedGames);
-    saveData("gameLeaderboards", gameLeaderboards);
-    saveData("customCategories", customCategories);
-    saveData("gameTypes", gameTypes);
-    saveData("achievements", achievements);
-    document.getElementById("totalGames").innerText = games.length;
-    document.getElementById("totalViews").innerText = totalViews;
-    checkAchievements();
-}
-
-// ========== KEYBOARD SHORTCUTS ==========
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
-    if (e.ctrlKey && e.key === 's') { e.preventDefault(); openStats(); }
-    if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); toggleAdmin(); }
-    if (e.ctrlKey && e.key === 'e') { e.preventDefault(); openSettings(); }
-    if (e.key === 'Escape') { closeStats(); closeAdmin(); closeSettings(); closeAchievements(); }
-});
-
-// ========== AUTH ==========
-function openLogin() { document.getElementById("loginOverlay").style.display = "flex"; }
-function login() {
-    var val = document.getElementById("pass").value;
-    if (adminPasswords.indexOf(val) !== -1) {
-        unlocked = true;
-        sessionStorage.setItem("admin", "true");
-        document.getElementById("loginOverlay").style.display = "none";
-        document.getElementById("adminPanel").classList.add("active");
-        showToast("✅ Admin unlocked!");
-    } else {
-        showToast("❌ Wrong password!", "error");
-    }
-}
-function toggleAdmin() {
-    if (!unlocked) { openLogin(); return; }
-    document.getElementById("adminPanel").classList.toggle("active");
-}
-function closeAdmin() { document.getElementById("adminPanel").classList.remove("active"); }
-
-// ========== SETTINGS ==========
-function openSettings() {
-    document.getElementById('settingsOverlay').style.display = 'flex';
-    document.getElementById('exportCode').value = btoa(encodeURIComponent(JSON.stringify({
-        games: games,
-        playTimeData: playTimeData,
-        personalBests: personalBests,
-        ratings: ratings,
-        favorites: favorites,
-        gameTags: gameTags,
-        comments: comments,
-        gameLeaderboards: gameLeaderboards,
-        customCategories: customCategories,
-        gameTypes: gameTypes,
-        achievements: achievements
-    })));
-}
-
-function closeSettings() { document.getElementById('settingsOverlay').style.display = 'none'; }
-
-function copyExportCode() {
-    document.getElementById('exportCode').select();
-    document.execCommand("copy");
-    showToast("✅ Copied!");
-}
-
-function importGames() {
-    var code = document.getElementById("importCode").value.trim();
-    if (!code) { showToast("❌ Paste code first!", "error"); return; }
-    try {
-        var data = JSON.parse(decodeURIComponent(atob(code)));
-        if (document.getElementById("replaceExisting").checked) {
-            games = data.games || [];
-            playTimeData = data.playTimeData || {};
-            personalBests = data.personalBests || {};
-            ratings = data.ratings || {};
-            favorites = data.favorites || [];
-            gameTags = data.gameTags || {};
-            comments = data.comments || {};
-            gameLeaderboards = data.gameLeaderboards || {};
-            customCategories = data.customCategories || [];
-            gameTypes = data.gameTypes || {};
-            achievements = data.achievements || achievements;
-        } else {
-            games = games.concat(data.games || []);
-            Object.assign(playTimeData, data.playTimeData || {});
-            Object.assign(personalBests, data.personalBests || {});
-            Object.assign(ratings, data.ratings || {});
-            favorites = favorites.concat(data.favorites || []);
-            favorites = favorites.filter(function(item, pos) { return favorites.indexOf(item) === pos; });
-            Object.assign(gameTags, data.gameTags || {});
-            Object.assign(comments, data.comments || {});
-            Object.assign(gameLeaderboards, data.gameLeaderboards || {});
-            customCategories = customCategories.concat(data.customCategories || []);
-            customCategories = customCategories.filter(function(item, pos) { return customCategories.indexOf(item) === pos; });
-            Object.assign(gameTypes, data.gameTypes || {});
-            if (data.achievements) Object.assign(achievements, data.achievements);
-        }
-        saveAll();
-        render();
-        renderCategories();
-        filterGames();
-        showToast("✅ Imported!");
-    } catch(e) {
-        showToast("❌ Invalid code", "error");
-    }
-}
-
-// ========== STATS ==========
-function openStats() {
-    document.getElementById('statsOverlay').style.display = 'flex';
-    document.getElementById('statsDashboard').style.display = 'block';
-    document.getElementById('statTotalGames').innerText = games.length;
-    document.getElementById('statTotalPlays').innerText = totalViews;
-    var totalTime = 0;
-    for (var key in playTimeData) totalTime += playTimeData[key];
-    document.getElementById('statTotalTime').innerText = formatPlayTime(totalTime);
-    var mp = games.reduce(function(max, g) { return (g.views || 0) > (max.views || 0) ? g : max; }, games[0]);
-    document.getElementById('statMostPlayed').innerText = mp ? mp.title : '-';
-    var allR = [];
-    for (var key in ratings) { if (ratings[key] > 0) allR.push(ratings[key]); }
-    document.getElementById('statAvgRating').innerText = allR.length ? (allR.reduce(function(a,b){return a+b;},0)/allR.length).toFixed(1) : '-';
-    var achUnlocked = 0;
-    for (var key in achievements) { if (achievements[key]) achUnlocked++; }
-    document.getElementById('statAchievements').innerText = achUnlocked;
-}
-
-function closeStats() {
-    document.getElementById('statsOverlay').style.display = 'none';
-    document.getElementById('statsDashboard').style.display = 'none';
-}
-
-// ========== FILTERS ==========
-var currentFilter = 'all';
-
-function filterByCategory(cat, el) {
-    currentFilter = cat;
-    var tags = document.querySelectorAll('.category-tag');
-    for (var i = 0; i < tags.length; i++) {
-        tags[i].classList.remove('active');
-    }
-    if (el) el.classList.add('active');
-    filterGames();
-}
-
-function filterGames() {
-    var term = document.getElementById('searchInput').value.toLowerCase();
-    var cards = document.querySelectorAll('.card');
-    for (var i = 0; i < cards.length; i++) {
-        var card = cards[i];
-        var idx = parseInt(card.dataset.index);
-        var g = games[idx];
-        if (!g) { card.style.display = 'none'; continue; }
-        var tags = gameTags[idx] || [];
-        var matchSearch = (g.title || '').toLowerCase().indexOf(term) !== -1 || 
-                         (g.desc || '').toLowerCase().indexOf(term) !== -1 || 
-                         tags.some(function(t) { return t.toLowerCase().indexOf(term) !== -1; });
-        var matchFilter = true;
-        if (currentFilter === 'favorites') matchFilter = favorites.indexOf(idx) !== -1;
-        else if (currentFilter === 'recent') matchFilter = recentlyPlayed.indexOf(idx) !== -1;
-        else if (currentFilter === 'mostPlayed') {
-            var sorted = games.slice().sort(function(a,b){ return (b.views||0)-(a.views||0); }).slice(0,10);
-            matchFilter = sorted.indexOf(g) !== -1;
-        }
-        else if (currentFilter !== 'all') matchFilter = tags.map(function(t){ return t.toLowerCase(); }).indexOf(currentFilter.toLowerCase()) !== -1;
-        card.style.display = matchSearch && matchFilter ? 'block' : 'none';
-    }
-}
-
-function addToRecentlyPlayed(i) {
-    recentlyPlayed = recentlyPlayed.filter(function(r) { return r !== i; });
-    recentlyPlayed.unshift(i);
-    if (recentlyPlayed.length > 10) recentlyPlayed.pop();
-    saveData('recentlyPlayed', recentlyPlayed);
-    updateRecentlyPlayed();
-}
-
-function updateRecentlyPlayed() {
-    var html = '';
-    for (var i = 0; i < recentlyPlayed.length; i++) {
-        var idx = recentlyPlayed[i];
-        if (games[idx]) {
-            html += '<span class="recent-game-chip" onclick="play(' + idx + ')">🎮 ' + escapeHtml(games[idx].title.substring(0,15)) + '</span>';
-        }
-    }
-    document.getElementById('recentList').innerHTML = html;
-}
-
-// ========== FAVORITES & RATINGS ==========
-function toggleFavorite(i, event) {
-    event.stopPropagation();
-    if (favorites.indexOf(i) !== -1) {
-        favorites = favorites.filter(function(f) { return f !== i; });
-    } else {
-        favorites.push(i);
-    }
-    saveAll();
-    render();
-    filterGames();
-}
-
-function rateGame(i, r, event) {
-    event.stopPropagation();
-    ratings[i] = r;
-    saveAll();
-    render();
-}
-
-// ========== RENDER ==========
-function render() {
-    var g = document.getElementById("games");
-    var a = document.getElementById("adminList");
-    var html = '';
-    var adminHTML = '';
-
-    for (var i = 0; i < games.length; i++) {
-        var x = games[i];
-        var pt = playTimeData['game_' + i] || 0;
-        var pb = personalBests['game_' + i] || 0;
-        var isFav = favorites.indexOf(i) !== -1;
-        var tags = gameTags[i] || [];
-        var updated = updatedGames.indexOf(i) !== -1;
-        var lb = getGameLeaderboard(i);
-        var type = gameTypes[i] || 'html';
-        
-        var thumbHTML = '';
-        if (type === 'youtube' && x.youtubeId) {
-            thumbHTML = '<iframe class="yt-thumb" src="https://www.youtube.com/embed/' + x.youtubeId + '?controls=0&showinfo=0&autohide=1" style="pointer-events:none;"></iframe>';
-        } else if (type === 'mp4' && x.mp4Url) {
-            thumbHTML = '<video src="' + x.mp4Url + '" muted loop playsinline style="pointer-events:none;"></video>';
-        } else {
-            thumbHTML = '<img src="' + (x.image || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22white%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E') + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22 fill=%22%232a2a2a%22%3E%3Crect width=%22400%22 height=%22200%22/%3E%3C/svg%3E\'">';
-        }
-
-        html += '<div class="card' + (updated ? ' updated' : '') + '" data-index="' + i + '">';
-        if (updated) html += '<div class="update-badge">🆕 UPDATED</div>';
-        html += '<button class="favorite-btn' + (isFav ? ' active' : '') + '" onclick="toggleFavorite(' + i + ', event)">' + (isFav ? '❤️' : '🤍') + '</button>';
-        html += thumbHTML;
-        html += '<div class="info">';
-        html += '<h2>' + escapeHtml(x.title) + '</h2>';
-        html += '<div class="game-tags">';
-        for (var j = 0; j < tags.length; j++) {
-            html += '<span class="game-tag">' + escapeHtml(tags[j]) + '</span>';
-        }
-        html += '</div>';
-        html += '<div class="rating">';
-        for (var s = 1; s <= 5; s++) {
-            html += '<span class="star' + (s <= (ratings[i] || 0) ? ' active' : '') + '" onclick="rateGame(' + i + ', ' + s + ', event)">★</span>';
-        }
-        html += '</div>';
-        html += '<div class="desc">' + escapeHtml(x.desc || "") + '</div>';
-        html += '<div style="background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.3);border-radius:8px;padding:8px;margin-top:8px;font-size:12px;color:#00aaff;">⏱️ ' + formatPlayTime(pt) + ' | 🏆 Best: ' + formatPlayTime(pb) + '</div>';
-        if (lb.length > 0) {
-            html += '<div class="leaderboard-section">🏅 Leaderboard:';
-            for (var k = 0; k < lb.length; k++) {
-                html += '<div class="leaderboard-entry"><span>' + (k+1) + '. ' + escapeHtml(lb[k].profile || 'Player') + '</span><span>' + formatPlayTime(lb[k].time) + '</span></div>';
-            }
-            html += '</div>';
-        }
-        html += '<button class="playBtn blue" onclick="play(' + i + ')">' + (type === 'youtube' || type === 'mp4' ? '▶️ WATCH' : 'PLAY') + '</button>';
-        html += '<button class="playBtn green" onclick="fullscreenGame(' + i + ')">FULLSCREEN</button>';
-        html += '<button class="playBtn purple" onclick="newTab(' + i + ')">NEW TAB</button>';
-        html += '<div class="meta"><span>📅 ' + (x.date || '?') + '</span><span>👁️ ' + (x.views || 0) + '</span></div>';
-        html += '</div></div>';
-
-        adminHTML += '<div style="border-bottom:1px solid #333;padding:8px 0;"><b>' + escapeHtml(x.title) + '</b> (' + type + ') | 👁️ ' + (x.views || 0) + '<br>';
-        adminHTML += '<button onclick="startEdit(' + i + ')" style="background:#ff8800;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Edit</button>';
-        adminHTML += '<button onclick="del(' + i + ')" style="background:red;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">Del</button>';
-        adminHTML += '<button onclick="updatedGames.push(' + i + '); saveAll(); render();" style="background:#00aaff;color:white;border:none;padding:6px;border-radius:6px;margin:2px;">🆕 Mark Updated</button>';
-        adminHTML += '</div>';
-    }
-
-    g.innerHTML = html;
-    a.innerHTML = adminHTML;
-    document.getElementById("totalGames").innerText = games.length;
-    document.getElementById("totalViews").innerText = totalViews;
-    updateRecentlyPlayed();
-}
-
-// ========== GAME ACTIONS ==========
-var editIndex = null;
-
-function startEdit(i) {
-    editIndex = i;
-    var g = games[i];
-    document.getElementById('title').value = g.title;
-    document.getElementById('image').value = g.image || '';
-    document.getElementById('desc').value = g.desc || '';
-    document.getElementById('tags').value = (gameTags[i] || []).join(', ');
-    document.getElementById('gameType').value = gameTypes[i] || 'html';
-    if (gameTypes[i] === 'youtube') {
-        document.getElementById('code').style.display = 'none';
-        document.getElementById('youtubeUrl').style.display = 'block';
-        document.getElementById('mp4Url').style.display = 'none';
-        document.getElementById('youtubeUrl').value = g.youtubeUrl || '';
-    } else if (gameTypes[i] === 'mp4') {
-        document.getElementById('code').style.display = 'none';
-        document.getElementById('youtubeUrl').style.display = 'none';
-        document.getElementById('mp4Url').style.display = 'block';
-        document.getElementById('mp4Url').value = g.mp4Url || '';
-    } else {
-        document.getElementById('code').style.display = 'block';
-        document.getElementById('youtubeUrl').style.display = 'none';
-        document.getElementById('mp4Url').style.display = 'none';
-        document.getElementById('code').value = g.code || '';
-    }
-    var btn = document.getElementById('addGameBtn');
-    btn.textContent = 'UPDATE GAME';
-    btn.style.background = '#ff8800';
-    btn.onclick = updateGame;
-}
-
-function updateGame() {
-    if (editIndex === null) return;
-    var type = document.getElementById('gameType').value;
-    games[editIndex] = {
-        title: document.getElementById('title').value,
-        image: document.getElementById('image').value,
-        desc: document.getElementById('desc').value,
-        code: type === 'html' ? document.getElementById('code').value : (games[editIndex].code || ''),
-        youtubeId: type === 'youtube' ? getYouTubeID(document.getElementById('youtubeUrl').value) : null,
-        youtubeUrl: type === 'youtube' ? document.getElementById('youtubeUrl').value : '',
-        mp4Url: type === 'mp4' ? document.getElementById('mp4Url').value : '',
-        views: games[editIndex].views || 0,
-        date: games[editIndex].date || new Date().toLocaleDateString(),
-        updated: new Date().toLocaleString()
-    };
-    gameTags[editIndex] = document.getElementById('tags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
-    gameTypes[editIndex] = type;
-    updatedGames.push(editIndex);
-    resetForm();
-    saveAll();
-    render();
-    filterGames();
-    showToast("✅ Game updated!");
-}
-
-function addGame() {
-    var title = document.getElementById('title').value;
-    var type = document.getElementById('gameType').value;
-    var code = type === 'html' ? document.getElementById('code').value : '';
-    var ytId = type === 'youtube' ? getYouTubeID(document.getElementById('youtubeUrl').value) : null;
-    var mp4Url = type === 'mp4' ? document.getElementById('mp4Url').value : '';
-    
-    if (!title || (type === 'html' && !code) || (type === 'youtube' && !ytId) || (type === 'mp4' && !mp4Url)) {
-        showToast("❌ Fill all required fields!", "error");
-        return;
-    }
-    
-    var idx = games.length;
-    games.push({
-        title: title,
-        image: document.getElementById('image').value,
-        desc: document.getElementById('desc').value,
-        code: code,
-        youtubeId: ytId,
-        youtubeUrl: type === 'youtube' ? document.getElementById('youtubeUrl').value : '',
-        mp4Url: mp4Url,
-        views: 0,
-        date: new Date().toLocaleDateString(),
-        updated: new Date().toLocaleString()
+// ============ RENDER ============
+function render(){
+    var g=document.getElementById("games");var a=document.getElementById("adminList");var html='',adminHTML='';
+    games.forEach(function(x,i){
+        var pt=playTimeData['game_'+i]||0;var pb=personalBests['game_'+i]||0;var isFav=favorites.indexOf(i)!==-1;
+        var tags=gameTags[i]||[];var updated=updatedGames.indexOf(i)!==-1;var lb=getGameLeaderboard(i);var type=gameTypes[i]||'html';
+        var thumb='';
+        if(type==='youtube'&&x.youtubeId)thumb='<iframe class="yt-thumb" src="https://www.youtube.com/embed/'+x.youtubeId+'?controls=0&showinfo=0" style="pointer-events:none;"></iframe>';
+        else if(type==='mp4'&&x.mp4Url)thumb='<video src="'+x.mp4Url+'" muted loop playsinline style="pointer-events:none;"></video>';
+        else thumb='<img src="'+(x.image||'https://placehold.co/400x200/1a1a2e/00aaff?text='+encodeURIComponent(x.title||'Game'))+'" loading="lazy" onerror="this.src=\'https://placehold.co/400x200/1a1a2e/00aaff?text=Game\'" style="image-rendering:auto;">';
+        html+='<div class="card'+(updated?' updated':'')+'" data-index="'+i+'">'+(updated?'<div class="update-badge">🆕 UPDATED</div>':'')+'<button class="favorite-btn'+(isFav?' active':'')+'" onclick="toggleFavorite('+i+',event)">'+(isFav?'❤️':'🤍')+'</button>'+thumb+'<div class="info"><h2>'+escapeHtml(x.title)+'</h2><div class="game-tags">'+tags.map(function(t){return'<span class="game-tag">'+escapeHtml(t)+'</span>';}).join('')+'</div><div class="rating">'+[1,2,3,4,5].map(function(s){return'<span class="star'+(s<=(ratings[i]||0)?' active':'')+'" onclick="rateGame('+i+','+s+',event)">★</span>';}).join('')+'</div><div class="desc">'+escapeHtml(x.desc||"")+'</div><div style="background:rgba(0,170,255,0.08);border-radius:8px;padding:8px;margin-top:6px;font-size:11px;color:#00aaff;">⏱️ '+formatPlayTime(pt)+' | 🏆 '+formatPlayTime(pb)+'</div>'+(lb.length?'<div class="leaderboard-section">🏅 '+lb.map(function(e,i){return'<div class="leaderboard-entry"><span>'+(i+1)+'. Player</span><span>'+formatPlayTime(e.time)+'</span></div>';}).join('')+'</div>':'')+'<button class="playBtn blue" onclick="play('+i+')">'+(type==='youtube'||type==='mp4'?'▶️ WATCH':'🎮 PLAY')+'</button><button class="playBtn green" onclick="fullscreenGame('+i+')">🖥️ FULLSCREEN</button><button class="playBtn purple" onclick="newTab('+i+')">🔗 NEW TAB</button><div class="meta"><span>📅 '+(x.date||'?')+'</span><span>👁️ '+(x.views||0)+'</span></div></div></div>';
+        adminHTML+='<div class="admin-game-item"><div><b>'+escapeHtml(x.title)+'</b> <small>('+type+')</small><br><small>👁️ '+(x.views||0)+' plays</small></div><div><button onclick="startEdit('+i+')" style="background:#ff8800;">✏️</button><button onclick="del('+i+')" style="background:#ff4444;">🗑️</button><button onclick="updatedGames.push('+i+');saveAll();render();" style="background:#00aaff;">🆕</button></div></div>';
     });
-    gameTags[idx] = document.getElementById('tags').value.split(',').map(function(t) { return t.trim(); }).filter(function(t) { return t; });
-    gameTypes[idx] = type;
-    updatedGames.push(idx);
-    resetForm();
-    saveAll();
-    render();
-    showToast("✅ Game added!");
+    g.innerHTML=html;a.innerHTML=adminHTML;document.getElementById("totalGames").innerText=games.length;document.getElementById("totalViews").innerText=totalViews;updateRecentlyPlayed();
 }
 
-function resetForm() {
-    document.getElementById('title').value = '';
-    document.getElementById('image').value = '';
-    document.getElementById('desc').value = '';
-    document.getElementById('code').value = '';
-    document.getElementById('tags').value = '';
-    document.getElementById('youtubeUrl').value = '';
-    document.getElementById('mp4Url').value = '';
-    document.getElementById('gameType').value = 'html';
-    document.getElementById('code').style.display = 'block';
-    document.getElementById('youtubeUrl').style.display = 'none';
-    document.getElementById('mp4Url').style.display = 'none';
-    var btn = document.getElementById('addGameBtn');
-    btn.textContent = 'ADD GAME';
-    btn.style.background = '#00aa55';
-    btn.onclick = addGame;
-    editIndex = null;
-}
+// ============ GAME ACTIONS ============
+var editIndex=null;
+function startEdit(i){editIndex=i;var g=games[i];document.getElementById('title').value=g.title;document.getElementById('image').value=g.image||'';document.getElementById('desc').value=g.desc||'';document.getElementById('tags').value=(gameTags[i]||[]).join(', ');document.getElementById('gameType').value=gameTypes[i]||'html';toggleCodeInput();if(gameTypes[i]==='youtube')document.getElementById('youtubeUrl').value=g.youtubeUrl||'';else if(gameTypes[i]==='mp4')document.getElementById('mp4Url').value=g.mp4Url||'';else document.getElementById('code').value=g.code||'';var btn=document.getElementById('addGameBtn');btn.textContent='✏️ UPDATE GAME';btn.style.background='linear-gradient(135deg,#ff8800,#cc6600)';btn.onclick=updateGame;}
+function updateGame(){if(editIndex===null)return;var t=document.getElementById('gameType').value;games[editIndex]={title:document.getElementById('title').value,image:document.getElementById('image').value,desc:document.getElementById('desc').value,code:t==='html'?document.getElementById('code').value:'',youtubeId:t==='youtube'?getYouTubeID(document.getElementById('youtubeUrl').value):null,youtubeUrl:t==='youtube'?document.getElementById('youtubeUrl').value:'',mp4Url:t==='mp4'?document.getElementById('mp4Url').value:'',views:games[editIndex].views||0,date:games[editIndex].date||new Date().toLocaleDateString(),updated:new Date().toLocaleString()};gameTags[editIndex]=document.getElementById('tags').value.split(',').map(function(t){return t.trim();}).filter(function(t){return t;});gameTypes[editIndex]=t;updatedGames.push(editIndex);resetForm();saveAll();render();filterGames();showToast("✅ Updated!");}
+function addGame(){var title=document.getElementById('title').value;var t=document.getElementById('gameType').value;var code=t==='html'?document.getElementById('code').value:'';var ytId=t==='youtube'?getYouTubeID(document.getElementById('youtubeUrl').value):null;var mp4=t==='mp4'?document.getElementById('mp4Url').value:'';if(!title||(t==='html'&&!code)||(t==='youtube'&&!ytId)||(t==='mp4'&&!mp4)){showToast("❌ Fill required fields!","error");return;}var idx=games.length;games.push({title:title,image:document.getElementById('image').value,desc:document.getElementById('desc').value,code:code,youtubeId:ytId,youtubeUrl:t==='youtube'?document.getElementById('youtubeUrl').value:'',mp4Url:mp4,views:0,date:new Date().toLocaleDateString(),updated:new Date().toLocaleString()});gameTags[idx]=document.getElementById('tags').value.split(',').map(function(t){return t.trim();}).filter(function(t){return t;});gameTypes[idx]=t;updatedGames.push(idx);resetForm();saveAll();render();showToast("✅ Added!");}
+function resetForm(){['title','image','desc','code','tags','youtubeUrl','mp4Url'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('gameType').value='html';toggleCodeInput();var btn=document.getElementById('addGameBtn');btn.textContent='✅ ADD GAME';btn.style.background='linear-gradient(135deg,#00cc66,#009944)';btn.onclick=addGame;editIndex=null;}
+function del(i){if(confirm('Delete "'+games[i].title+'"?')){delete playTimeData['game_'+i];delete personalBests['game_'+i];delete ratings[i];delete gameTags[i];delete gameLeaderboards[i];delete gameTypes[i];favorites=favorites.filter(function(f){return f!==i;});games.splice(i,1);saveAll();render();filterGames();}}
+function play(i){games[i].views=(games[i].views||0)+1;totalViews++;addToRecentlyPlayed(i);updatedGames=updatedGames.filter(function(u){return u!==i;});var t=gameTypes[i]||'html';var f=document.getElementById('frame');f.style.display='block';if(t==='youtube'&&games[i].youtubeId)f.srcdoc='<html><body style="margin:0;background:#000;"><iframe src="https://www.youtube.com/embed/'+games[i].youtubeId+'?autoplay=1" width="100%" height="100%" frameborder="0" allowfullscreen></iframe></body></html>';else if(t==='mp4'&&games[i].mp4Url)f.srcdoc='<html><body style="margin:0;background:#000;"><video src="'+games[i].mp4Url+'" controls autoplay width="100%" height="100%"></video></body></html>';else f.srcdoc=games[i].code;f.scrollIntoView({behavior:'smooth'});saveAll();startPlayTimer(i);}
+function fullscreenGame(i){play(i);var f=document.getElementById('frame');if(f.requestFullscreen)f.requestFullscreen();}
+function newTab(i){games[i].views=(games[i].views||0)+1;totalViews++;addToRecentlyPlayed(i);saveAll();var t=gameTypes[i]||'html';if(t==='youtube'&&games[i].youtubeId)window.open('https://www.youtube.com/watch?v='+games[i].youtubeId,'_blank');else if(t==='mp4'&&games[i].mp4Url)window.open(games[i].mp4Url,'_blank');else{var w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+escapeHtml(games[i].title)+'</title></head><body>'+games[i].code+'</body></html>');}startPlayTimer(i);}
+function saveAdmins(){adminPasswords=document.getElementById("admins").value.split(",").map(function(v){return v.trim();}).filter(function(v){return v;});saveData("admins",adminPasswords);showToast("✅ Saved!");}
+function uploadHTMLFile(){var f=document.getElementById('htmlFileInput').files[0];if(f){var r=new FileReader();r.onload=function(e){document.getElementById('code').value=e.target.result;};r.readAsText(f);}}
+function uploadMP4File(){var f=document.getElementById('mp4FileInput').files[0];if(f){document.getElementById('mp4Url').value=URL.createObjectURL(f);showToast("✅ MP4 loaded!");}}
+function updateAdminCategories(){var l=document.getElementById('customCategoriesList');if(l)l.innerHTML=customCategories.map(function(c){return'<span style="display:inline-block;background:rgba(0,170,255,0.1);padding:4px 10px;border-radius:10px;margin:2px;font-size:12px;">'+c+' <button onclick="deleteCategory(\''+c+'\');updateAdminCategories();" style="background:none;border:none;color:red;cursor:pointer;">✕</button></span>';}).join('');}
 
-function del(i) {
-    if (confirm('Delete "' + games[i].title + '"?')) {
-        delete playTimeData['game_' + i];
-        delete personalBests['game_' + i];
-        delete ratings[i];
-        delete gameTags[i];
-        delete comments[i];
-        delete gameLeaderboards[i];
-        delete gameTypes[i];
-        favorites = favorites.filter(function(f) { return f !== i; });
-        games.splice(i, 1);
-        saveAll();
-        render();
-        filterGames();
-    }
-}
-
-function play(i) {
-    games[i].views = (games[i].views || 0) + 1;
-    totalViews++;
-    addToRecentlyPlayed(i);
-    updatedGames = updatedGames.filter(function(u) { return u !== i; });
-    
-    var type = gameTypes[i] || 'html';
-    var frame = document.getElementById('frame');
-    frame.style.display = 'block';
-    
-    if (type === 'youtube' && games[i].youtubeId) {
-        frame.srcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000;}iframe{width:100%;height:100%;border:none;}</style></head><body><iframe src="https://www.youtube.com/embed/' + games[i].youtubeId + '?autoplay=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe></body></html>';
-    } else if (type === 'mp4' && games[i].mp4Url) {
-        frame.srcdoc = '<!DOCTYPE html><html><head><style>*{margin:0;padding:0;background:#000;}video{width:100%;height:100%;}</style></head><body><video src="' + games[i].mp4Url + '" controls autoplay style="width:100%;height:100%;"></video></body></html>';
-    } else {
-        frame.srcdoc = games[i].code;
-    }
-    
-    frame.scrollIntoView({ behavior: 'smooth' });
-    saveAll();
-    startPlayTimer(i);
-}
-
-function fullscreenGame(i) {
-    play(i);
-    var frame = document.getElementById('frame');
-    if (frame.requestFullscreen) frame.requestFullscreen();
-}
-
-function newTab(i) {
-    games[i].views = (games[i].views || 0) + 1;
-    totalViews++;
-    addToRecentlyPlayed(i);
-    updatedGames = updatedGames.filter(function(u) { return u !== i; });
-    saveAll();
-    
-    var type = gameTypes[i] || 'html';
-    if (type === 'youtube' && games[i].youtubeId) {
-        window.open('https://www.youtube.com/watch?v=' + games[i].youtubeId, '_blank');
-    } else if (type === 'mp4' && games[i].mp4Url) {
-        window.open(games[i].mp4Url, '_blank');
-    } else {
-        var win = window.open('', '_blank');
-        win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(games[i].title) + '</title></head><body>' + games[i].code + '</body></html>');
-    }
-    startPlayTimer(i);
-}
-
-function saveAdmins() {
-    adminPasswords = document.getElementById("admins").value.split(",").map(function(v) { return v.trim(); }).filter(function(v) { return v; });
-    saveData("admins", adminPasswords);
-    showToast("✅ Admins saved");
-}
-
-function uploadHTMLFile() {
-    var file = document.getElementById('htmlFileInput').files[0];
-    if (file) {
-        var reader = new FileReader();
-        reader.onload = function(e) { document.getElementById('code').value = e.target.result; };
-        reader.readAsText(file);
-    }
-}
-
-function uploadMP4File() {
-    var file = document.getElementById('mp4FileInput').files[0];
-    if (file) {
-        var url = URL.createObjectURL(file);
-        document.getElementById('mp4Url').value = url;
-        showToast("✅ MP4 loaded (local URL)");
-    }
-}
-
-function updateAdminCategories() {
-    var list = document.getElementById('customCategoriesList');
-    if (list) {
-        var html = '';
-        for (var i = 0; i < customCategories.length; i++) {
-            var c = customCategories[i];
-            html += '<span style="display:inline-block;background:rgba(0,170,255,0.1);padding:4px 10px;border-radius:10px;margin:2px;font-size:12px;">' + c + ' <button onclick="deleteCategory(\'' + c + '\');updateAdminCategories();" style="background:none;border:none;color:red;cursor:pointer;">✕</button></span>';
-        }
-        list.innerHTML = html;
-    }
-}
-
-// ========== INIT ==========
-var savedBG = loadData("bg", "default");
-var bgSelect = document.getElementById("bgSelect");
-if (bgSelect) bgSelect.value = savedBG;
-currentBG = savedBG;
-changeBG();
+// ============ INIT ============
+var savedBG=loadData("bg","default");currentBG=savedBG;document.getElementById('bgSelect').value=savedBG;
+changeBG();populateBGSelect();document.getElementById('emojiTheme').value=currentEmojiTheme;
 
 // Particles
-var p = document.querySelector(".particles");
-var frag = document.createDocumentFragment();
-for (var i = 0; i < 150; i++) {
-    var s = document.createElement("span");
-    s.style.left = Math.random() * 100 + "vw";
-    s.style.animationDuration = (Math.random() * 10 + 5) + "s";
-    s.style.animationDelay = Math.random() * 5 + "s";
-    frag.appendChild(s);
-}
-p.appendChild(frag);
+var pc=document.getElementById('particlesContainer');var frag=document.createDocumentFragment();
+for(var i=0;i<180;i++){var s=document.createElement("span");s.style.left=Math.random()*100+"vw";s.style.animationDuration=(Math.random()*10+5)+"s";s.style.animationDelay=Math.random()*5+"s";frag.appendChild(s);}
+pc.appendChild(frag);
 
-document.addEventListener('fullscreenchange', function() {
-    if (!document.fullscreenElement) stopPlayTimer();
-});
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement)stopPlayTimer();});
+var fo=new MutationObserver(function(muts){muts.forEach(function(m){if(m.type==='attributes'&&m.attributeName==='style'&&document.getElementById('frame').style.display==='none')stopPlayTimer();});});
+fo.observe(document.getElementById('frame'),{attributes:true});
 
-var frameObserver = new MutationObserver(function(mutations) {
-    mutations.forEach(function(m) {
-        if (m.type === 'attributes' && m.attributeName === 'style') {
-            if (document.getElementById('frame').style.display === 'none') stopPlayTimer();
-        }
-    });
-});
-frameObserver.observe(document.getElementById('frame'), { attributes: true });
-
-animateBG();
-render();
-renderCategories();
-updateAdminCategories();
-
-setInterval(saveAll, 30000);
+animateBG();render();renderCategories();updateAdminCategories();
+setInterval(spawnEmoji,2500);
+setInterval(saveAll,30000);
 checkAchievements();
 
-// Make functions globally accessible
-window.play = play;
-window.fullscreenGame = fullscreenGame;
-window.newTab = newTab;
-window.toggleFavorite = toggleFavorite;
-window.rateGame = rateGame;
-window.startEdit = startEdit;
-window.del = del;
-window.filterByCategory = filterByCategory;
-window.addCustomCategory = addCustomCategory;
-window.deleteCategory = deleteCategory;
+// Expose globally
+window.play=play;window.fullscreenGame=fullscreenGame;window.newTab=newTab;
+window.toggleFavorite=toggleFavorite;window.rateGame=rateGame;window.startEdit=startEdit;window.del=del;
+window.filterByCategory=filterByCategory;window.addCustomCategory=addCustomCategory;window.deleteCategory=deleteCategory;
+window.aiFindImage=aiFindImage;
 </script>
 </body>
 </html>
