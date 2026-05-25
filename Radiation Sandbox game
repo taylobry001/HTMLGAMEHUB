@@ -1,0 +1,2864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUCLEAR SANDBOX — REACTOR ZERO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+
+:root {
+  --neon-green: #00ff88;
+  --neon-cyan: #00e5ff;
+  --neon-yellow: #ffee00;
+  --neon-orange: #ff8800;
+  --neon-red: #ff2244;
+  --neon-purple: #cc44ff;
+  --neon-blue: #0088ff;
+  --bg-dark: #030810;
+  --bg-panel: rgba(0,20,40,0.92);
+  --border-glow: rgba(0,229,255,0.3);
+  --text-dim: #4a7a8a;
+  --cell-size: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-dark);
+  color: var(--neon-cyan);
+  font-family: 'Share Tech Mono', monospace;
+  overflow: hidden;
+  width: 100vw; height: 100vh;
+  cursor: crosshair;
+  user-select: none;
+}
+
+#game-wrapper {
+  position: relative;
+  width: 100vw; height: 100vh;
+  overflow: hidden;
+}
+
+/* BACKGROUND GRID */
+#bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* MAIN CANVAS */
+#main-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+  image-rendering: pixelated;
+}
+
+/* PARTICLE CANVAS */
+#particle-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* EFFECT OVERLAY */
+#effect-overlay {
+  position: absolute; inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* SCREEN SHAKE */
+#shake-layer {
+  position: absolute; inset: -20px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ====== HUD ====== */
+#hud {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* TOP BAR */
+#top-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: linear-gradient(180deg, rgba(0,10,25,0.98) 0%, rgba(0,10,25,0.7) 100%);
+  border-bottom: 1px solid var(--border-glow);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 20px;
+  pointer-events: all;
+  backdrop-filter: blur(8px);
+}
+
+#game-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 20px var(--neon-cyan), 0 0 40px rgba(0,229,255,0.3);
+  white-space: nowrap;
+}
+
+.title-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin-top: 2px;
+  display: block;
+}
+
+#top-stats {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,229,255,0.05);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.stat-chip .label { color: var(--text-dim); }
+.stat-chip .value { color: var(--neon-cyan); font-weight: bold; }
+.stat-chip.danger .value { color: var(--neon-red); text-shadow: 0 0 8px var(--neon-red); }
+.stat-chip.warn .value { color: var(--neon-orange); }
+.stat-chip.safe .value { color: var(--neon-green); }
+
+#top-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.hud-btn {
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.3);
+  color: var(--neon-cyan);
+  padding: 6px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hud-btn:hover {
+  background: rgba(0,229,255,0.2);
+  box-shadow: 0 0 12px rgba(0,229,255,0.3);
+}
+
+.hud-btn.active {
+  background: rgba(0,229,255,0.25);
+  box-shadow: 0 0 15px rgba(0,229,255,0.5);
+  color: white;
+}
+
+.hud-btn.danger-btn {
+  border-color: rgba(255,34,68,0.4);
+  color: var(--neon-red);
+}
+
+.hud-btn.danger-btn:hover {
+  background: rgba(255,34,68,0.2);
+  box-shadow: 0 0 12px rgba(255,34,68,0.3);
+}
+
+/* LEFT PANEL - ELEMENTS */
+#left-panel {
+  position: absolute;
+  top: 52px; left: 0; bottom: 0;
+  width: 200px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-glow);
+  display: flex;
+  flex-direction: column;
+  pointer-events: all;
+  overflow-y: auto;
+  overflow-x: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.panel-section {
+  border-bottom: 1px solid rgba(0,229,255,0.1);
+  padding: 10px 8px;
+}
+
+.panel-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  padding-left: 4px;
+}
+
+.element-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.element-btn {
+  position: relative;
+  padding: 8px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  text-align: center;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+
+.element-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  transition: opacity 0.15s;
+}
+
+.element-btn:hover::before { opacity: 0.3; }
+.element-btn:hover { transform: translateY(-1px); }
+
+.element-btn.selected {
+  border-color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(255,255,255,0.2);
+}
+
+.element-btn.selected::before { opacity: 0.4; }
+
+.el-symbol {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  display: block;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.el-name {
+  font-size: 8px;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+.el-locked {
+  opacity: 0.3;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+}
+
+/* Element color themes */
+.el-uranium { background: rgba(0,255,100,0.1); border-color: rgba(0,255,100,0.3); color: #00ff64; }
+.el-uranium::before { background: radial-gradient(circle, #00ff64, transparent); }
+.el-plutonium { background: rgba(0,200,255,0.1); border-color: rgba(0,200,255,0.3); color: #00c8ff; }
+.el-plutonium::before { background: radial-gradient(circle, #00c8ff, transparent); }
+.el-thorium { background: rgba(200,150,0,0.1); border-color: rgba(200,150,0,0.3); color: #c89600; }
+.el-thorium::before { background: radial-gradient(circle, #c89600, transparent); }
+.el-neutron { background: rgba(200,200,255,0.1); border-color: rgba(200,200,255,0.3); color: #c8c8ff; }
+.el-neutron::before { background: radial-gradient(circle, #c8c8ff, transparent); }
+.el-water { background: rgba(0,120,255,0.1); border-color: rgba(0,120,255,0.3); color: #0078ff; }
+.el-water::before { background: radial-gradient(circle, #0078ff, transparent); }
+.el-graphite { background: rgba(120,120,120,0.1); border-color: rgba(120,120,120,0.3); color: #888; }
+.el-graphite::before { background: radial-gradient(circle, #888, transparent); }
+.el-lead { background: rgba(100,80,120,0.1); border-color: rgba(100,80,120,0.3); color: #9a7ab0; }
+.el-lead::before { background: radial-gradient(circle, #9a7ab0, transparent); }
+.el-fire { background: rgba(255,80,0,0.1); border-color: rgba(255,80,0,0.3); color: #ff5000; }
+.el-fire::before { background: radial-gradient(circle, #ff5000, transparent); }
+.el-plasma { background: rgba(255,0,200,0.1); border-color: rgba(255,0,200,0.3); color: #ff00c8; }
+.el-plasma::before { background: radial-gradient(circle, #ff00c8, transparent); }
+.el-ice { background: rgba(180,230,255,0.1); border-color: rgba(180,230,255,0.3); color: #b4e6ff; }
+.el-ice::before { background: radial-gradient(circle, #b4e6ff, transparent); }
+.el-antimatter { background: rgba(255,0,0,0.1); border-color: rgba(255,0,0,0.5); color: #ff0000; }
+.el-antimatter::before { background: radial-gradient(circle, #ff0000, transparent); }
+.el-darkmat { background: rgba(60,0,80,0.2); border-color: rgba(150,0,200,0.4); color: #aa00dd; }
+.el-darkmat::before { background: radial-gradient(circle, #aa00dd, transparent); }
+.el-creature { background: rgba(0,200,80,0.1); border-color: rgba(0,200,80,0.3); color: #00c850; }
+.el-creature::before { background: radial-gradient(circle, #00c850, transparent); }
+.el-metal { background: rgba(180,160,100,0.1); border-color: rgba(180,160,100,0.3); color: #b4a064; }
+.el-metal::before { background: radial-gradient(circle, #b4a064, transparent); }
+.el-gas { background: rgba(200,255,200,0.05); border-color: rgba(200,255,200,0.2); color: #c8ffc8; }
+.el-gas::before { background: radial-gradient(circle, #c8ffc8, transparent); }
+.el-acid { background: rgba(180,255,0,0.1); border-color: rgba(180,255,0,0.3); color: #b4ff00; }
+.el-acid::before { background: radial-gradient(circle, #b4ff00, transparent); }
+.el-eraser { background: rgba(255,50,50,0.1); border-color: rgba(255,50,50,0.3); color: #ff3232; }
+.el-eraser::before { background: radial-gradient(circle, #ff3232, transparent); }
+.el-black-hole { background: radial-gradient(circle, rgba(100,0,150,0.3), rgba(0,0,0,0.8)); border-color: rgba(150,0,255,0.6); color: #9900ff; }
+.el-tritium { background: rgba(255,150,0,0.1); border-color: rgba(255,150,0,0.3); color: #ff9600; }
+.el-tritium::before { background: radial-gradient(circle, #ff9600, transparent); }
+.el-deuterium { background: rgba(255,220,0,0.1); border-color: rgba(255,220,0,0.3); color: #ffdc00; }
+.el-deuterium::before { background: radial-gradient(circle, #ffdc00, transparent); }
+
+/* RIGHT PANEL - TOOLS & INFO */
+#right-panel {
+  position: absolute;
+  top: 52px; right: 0; bottom: 0;
+  width: 200px;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border-glow);
+  display: flex;
+  flex-direction: column;
+  pointer-events: all;
+  backdrop-filter: blur(12px);
+  overflow-y: auto;
+}
+
+/* TOOL CONTROLS */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slider-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  width: 55px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.slider-val {
+  font-size: 10px;
+  color: var(--neon-cyan);
+  width: 28px;
+  text-align: right;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  flex: 1;
+  height: 3px;
+  background: rgba(0,229,255,0.2);
+  outline: none;
+  border-radius: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  cursor: pointer;
+}
+
+/* RADIATION METER */
+#rad-meter {
+  padding: 10px 8px;
+}
+
+.meter-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+  position: relative;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.meter-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer { to { left: 200%; } }
+
+.meter-rad { background: linear-gradient(90deg, #00ff88, #ffee00, #ff2244); }
+.meter-heat { background: linear-gradient(90deg, #0088ff, #ff8800, #ff2244); }
+.meter-power { background: linear-gradient(90deg, #0088ff, #00e5ff); }
+
+/* LOG */
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 100px;
+  max-height: 200px;
+}
+
+.log-entry {
+  font-size: 9px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(0,229,255,0.05);
+  line-height: 1.4;
+  animation: fadeInLog 0.3s ease;
+}
+
+@keyframes fadeInLog { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+
+.log-normal { color: var(--text-dim); }
+.log-warn { color: var(--neon-orange); }
+.log-danger { color: var(--neon-red); text-shadow: 0 0 6px var(--neon-red); }
+.log-discover { color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); }
+.log-info { color: var(--neon-cyan); }
+
+/* BOTTOM BAR */
+#bottom-bar {
+  position: absolute;
+  bottom: 0; left: 200px; right: 200px;
+  height: 44px;
+  background: linear-gradient(0deg, rgba(0,10,25,0.98) 0%, rgba(0,10,25,0.7) 100%);
+  border-top: 1px solid var(--border-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: all;
+  backdrop-filter: blur(8px);
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+  border: 1px solid rgba(0,229,255,0.2);
+  background: rgba(0,229,255,0.05);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.tool-btn:hover, .tool-btn.active {
+  color: var(--neon-cyan);
+  border-color: rgba(0,229,255,0.5);
+  background: rgba(0,229,255,0.15);
+  box-shadow: 0 0 10px rgba(0,229,255,0.2);
+}
+
+.tool-btn .tool-key {
+  font-size: 9px;
+  opacity: 0.5;
+  background: rgba(255,255,255,0.1);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* DISCOVERY POPUP */
+#discovery-popup {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  z-index: 100;
+  background: rgba(0,10,25,0.97);
+  border: 2px solid var(--neon-green);
+  border-radius: 8px;
+  padding: 24px 32px;
+  text-align: center;
+  max-width: 380px;
+  box-shadow: 0 0 40px rgba(0,255,136,0.3), 0 0 80px rgba(0,255,136,0.1);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: all;
+}
+
+#discovery-popup.show { transform: translate(-50%, -50%) scale(1); }
+
+#discovery-popup .disc-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--neon-green);
+  margin-bottom: 10px;
+}
+
+#discovery-popup .disc-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px var(--neon-green);
+}
+
+#discovery-popup .disc-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* EXPLOSION FLASH */
+#explosion-flash {
+  position: fixed; inset: 0;
+  z-index: 50;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.05s;
+}
+
+/* MENU OVERLAY */
+#menu-overlay {
+  position: fixed; inset: 0;
+  z-index: 90;
+  background: rgba(0,5,15,0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+}
+
+#menu-overlay.hidden { display: none; }
+
+.menu-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--neon-cyan);
+  letter-spacing: 6px;
+  text-shadow: 0 0 30px var(--neon-cyan), 0 0 60px rgba(0,229,255,0.3);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.menu-subtitle {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 4px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.menu-btn {
+  width: 280px;
+  padding: 14px 24px;
+  text-align: center;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  letter-spacing: 3px;
+  border: 1px solid rgba(0,229,255,0.3);
+  background: rgba(0,229,255,0.05);
+  color: var(--neon-cyan);
+  border-radius: 4px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.menu-btn:hover {
+  background: rgba(0,229,255,0.2);
+  box-shadow: 0 0 20px rgba(0,229,255,0.3);
+  border-color: var(--neon-cyan);
+  transform: scale(1.02);
+}
+
+.menu-btn.primary {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  background: rgba(0,255,136,0.05);
+  font-size: 15px;
+}
+
+.menu-btn.primary:hover {
+  background: rgba(0,255,136,0.2);
+  box-shadow: 0 0 25px rgba(0,255,136,0.4);
+}
+
+/* TOOLTIP */
+#tooltip {
+  position: fixed;
+  z-index: 80;
+  background: rgba(0,10,25,0.97);
+  border: 1px solid rgba(0,229,255,0.4);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 11px;
+  max-width: 200px;
+  pointer-events: none;
+  display: none;
+  line-height: 1.5;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+#tooltip .tt-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+#tooltip .tt-desc { color: var(--text-dim); }
+#tooltip .tt-stats { color: var(--neon-cyan); margin-top: 4px; font-size: 10px; }
+
+/* ACHIEVEMENTS */
+#achievement-popup {
+  position: fixed;
+  bottom: 60px; right: 210px;
+  z-index: 80;
+  background: rgba(0,10,25,0.97);
+  border: 1px solid var(--neon-yellow);
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(120%);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  box-shadow: 0 0 20px rgba(255,238,0,0.2);
+}
+
+#achievement-popup.show { transform: translateX(0); }
+.ach-icon { font-size: 22px; }
+.ach-text .ach-title { font-family: 'Orbitron', sans-serif; font-size: 9px; color: var(--neon-yellow); letter-spacing: 2px; }
+.ach-text .ach-name { font-size: 13px; color: white; margin-top: 2px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 2px; }
+
+/* RADIATION OVERLAY */
+#radiation-vignette {
+  position: fixed; inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,255,80,0.15) 100%);
+  transition: opacity 0.5s;
+}
+
+/* SCANLINES */
+#scanlines {
+  position: fixed; inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
+}
+
+/* PAUSE OVERLAY */
+#pause-overlay {
+  position: fixed; inset: 0;
+  z-index: 70;
+  background: rgba(0,5,15,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  backdrop-filter: blur(4px);
+}
+
+#pause-overlay.hidden { display: none; }
+.pause-title { font-family: 'Orbitron', sans-serif; font-size: 32px; color: var(--neon-cyan); letter-spacing: 8px; text-shadow: 0 0 30px var(--neon-cyan); }
+
+/* MINI-MAP */
+#mini-map {
+  position: absolute;
+  bottom: 50px; right: 8px;
+  width: 100px; height: 100px;
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 3px;
+  background: rgba(0,0,0,0.5);
+  pointer-events: none;
+  display: none;
+}
+
+/* HEAT WAVE EFFECT */
+@keyframes heatWave {
+  0%, 100% { filter: url(#heat-distort); }
+  50% { filter: url(#heat-distort2); }
+}
+
+/* Blinking */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.blink { animation: blink 1s infinite; }
+
+/* Glow pulse */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 10px currentColor; }
+  50% { box-shadow: 0 0 25px currentColor, 0 0 50px currentColor; }
+}
+
+/* PROGRESS */
+.unlock-bar {
+  height: 3px;
+  background: rgba(0,229,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.unlock-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* INTRO ANIMATION */
+@keyframes titlePulse {
+  0%, 100% { text-shadow: 0 0 30px var(--neon-cyan), 0 0 60px rgba(0,229,255,0.3); }
+  50% { text-shadow: 0 0 50px var(--neon-cyan), 0 0 100px rgba(0,229,255,0.5), 0 0 150px rgba(0,229,255,0.2); }
+}
+
+.menu-title { animation: titlePulse 2s infinite; }
+
+/* Danger warning */
+@keyframes dangerFlash {
+  0%, 100% { border-color: rgba(255,34,68,0.4); }
+  50% { border-color: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); }
+}
+
+.danger-warning { animation: dangerFlash 0.5s infinite; }
+
+/* Chain reaction flash */
+@keyframes chainFlash {
+  0% { opacity: 0; }
+  10% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- SVG filters -->
+<svg style="position:absolute;width:0;height:0;">
+  <defs>
+    <filter id="glow-filter">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="heat-distort">
+      <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="3" seed="1" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div id="game-wrapper">
+  <div id="bg-grid"></div>
+  <canvas id="main-canvas"></canvas>
+  <canvas id="particle-canvas"></canvas>
+  <canvas id="effect-overlay"></canvas>
+  <div id="radiation-vignette"></div>
+  <div id="scanlines"></div>
+  <div id="explosion-flash"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <!-- TOP BAR -->
+    <div id="top-bar">
+      <div>
+        <div id="game-title">⚛ REACTOR ZERO <span class="title-sub">NUCLEAR SANDBOX v1.0</span></div>
+      </div>
+      <div id="top-stats">
+        <div class="stat-chip" id="stat-rad">
+          <span class="label">☢ RAD</span>
+          <span class="value" id="val-rad">0 Sv</span>
+        </div>
+        <div class="stat-chip" id="stat-temp">
+          <span class="label">🌡 TEMP</span>
+          <span class="value" id="val-temp">20°C</span>
+        </div>
+        <div class="stat-chip" id="stat-power">
+          <span class="label">⚡ PWR</span>
+          <span class="value" id="val-power">0 MW</span>
+        </div>
+        <div class="stat-chip" id="stat-reactions">
+          <span class="label">🔬 REACT</span>
+          <span class="value" id="val-reactions">0</span>
+        </div>
+        <div class="stat-chip" id="stat-score">
+          <span class="label">★ SCORE</span>
+          <span class="value" id="val-score">0</span>
+        </div>
+        <div class="stat-chip" id="stat-disc">
+          <span class="label">🧪 DISC</span>
+          <span class="value safe" id="val-disc">0/20</span>
+        </div>
+      </div>
+      <div id="top-buttons">
+        <button class="hud-btn" id="btn-pause" onclick="togglePause()">⏸ PAUSE</button>
+        <button class="hud-btn" id="btn-slow" onclick="toggleSlow()">🐢 SLOW-MO</button>
+        <button class="hud-btn danger-btn" id="btn-clear" onclick="clearSandbox()">🗑 CLEAR</button>
+        <button class="hud-btn" onclick="saveGame()">💾 SAVE</button>
+        <button class="hud-btn" onclick="showMenu()">☰ MENU</button>
+      </div>
+    </div>
+
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+      <div class="panel-section">
+        <div class="panel-title">⚛ RADIOACTIVE</div>
+        <div class="element-grid">
+          <div class="element-btn el-uranium" data-el="uranium" onclick="selectElement(this)" data-name="Uranium-235" data-desc="Fissile material. Releases neutrons when struck. Core of nuclear reactors.">
+            <span class="el-symbol">U</span><span class="el-name">URANIUM</span>
+          </div>
+          <div class="element-btn el-plutonium" data-el="plutonium" onclick="selectElement(this)" data-name="Plutonium-239" data-desc="Weapons-grade fissile material. Extremely unstable. High chain reaction potential.">
+            <span class="el-symbol">Pu</span><span class="el-name">PLUTONIUM</span>
+          </div>
+          <div class="element-btn el-thorium" data-el="thorium" onclick="selectElement(this)" data-name="Thorium-232" data-desc="Fertile material. Slower decay. Can be converted to U-233 via neutron absorption.">
+            <span class="el-symbol">Th</span><span class="el-name">THORIUM</span>
+          </div>
+          <div class="element-btn el-tritium" data-el="tritium" onclick="selectElement(this)" data-name="Tritium" data-desc="Radioactive hydrogen isotope. Key fusion fuel. Short half-life.">
+            <span class="el-symbol">T</span><span class="el-name">TRITIUM</span>
+          </div>
+          <div class="element-btn el-deuterium" data-el="deuterium" onclick="selectElement(this)" data-name="Deuterium" data-desc="Heavy hydrogen. Fusion fuel. Combine with tritium for thermonuclear reaction.">
+            <span class="el-symbol">D</span><span class="el-name">DEUTERIUM</span>
+          </div>
+          <div class="element-btn el-neutron" data-el="neutron" onclick="selectElement(this)" data-name="Neutron Beam" data-desc="Free neutrons. Trigger fission reactions. Move at high velocity.">
+            <span class="el-symbol">n</span><span class="el-name">NEUTRON</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🧊 MODERATORS & SHIELDING</div>
+        <div class="element-grid">
+          <div class="element-btn el-water" data-el="water" onclick="selectElement(this)" data-name="Heavy Water" data-desc="Slows neutrons. Acts as coolant. Prevents runaway reactions.">
+            <span class="el-symbol">H₂O</span><span class="el-name">WATER</span>
+          </div>
+          <div class="element-btn el-graphite" data-el="graphite" onclick="selectElement(this)" data-name="Graphite" data-desc="Neutron moderator. Slows fast neutrons to thermal energy. Also combustible.">
+            <span class="el-symbol">C</span><span class="el-name">GRAPHITE</span>
+          </div>
+          <div class="element-btn el-lead" data-el="lead" onclick="selectElement(this)" data-name="Lead Shielding" data-desc="Dense metal. Absorbs gamma radiation. Creates safe containment zones.">
+            <span class="el-symbol">Pb</span><span class="el-name">LEAD</span>
+          </div>
+          <div class="element-btn el-ice" data-el="ice" onclick="selectElement(this)" data-name="Cryo-Ice" data-desc="Extreme cooling agent. Rapidly reduces temperature. Slows reactions dramatically.">
+            <span class="el-symbol">ICE</span><span class="el-name">CRYO-ICE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🔥 ENERGETICS</div>
+        <div class="element-grid">
+          <div class="element-btn el-fire" data-el="fire" onclick="selectElement(this)" data-name="Fire" data-desc="High-temperature combustion. Spreads to flammable materials. Heats surrounding cells.">
+            <span class="el-symbol">🔥</span><span class="el-name">FIRE</span>
+          </div>
+          <div class="element-btn el-plasma" data-el="plasma" onclick="selectElement(this)" data-name="Plasma" data-desc="Superheated ionized gas. Extreme temperatures. Damages everything nearby.">
+            <span class="el-symbol">⚡</span><span class="el-name">PLASMA</span>
+          </div>
+          <div class="element-btn el-gas" data-el="gas" onclick="selectElement(this)" data-name="Volatile Gas" data-desc="Explosive when ignited. Spreads through voids. Fuel-air explosions possible.">
+            <span class="el-symbol">GAS</span><span class="el-name">VOL GAS</span>
+          </div>
+          <div class="element-btn el-acid" data-el="acid" onclick="selectElement(this)" data-name="Corrosive Acid" data-desc="Dissolves most materials. Creates toxic fumes. Neutralized by water.">
+            <span class="el-symbol">HₓO</span><span class="el-name">ACID</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🌍 WORLD</div>
+        <div class="element-grid">
+          <div class="element-btn el-metal" data-el="metal" onclick="selectElement(this)" data-name="Steel Wall" data-desc="Structural material. Conducts heat. Melts at extreme temperatures.">
+            <span class="el-symbol">Fe</span><span class="el-name">STEEL</span>
+          </div>
+          <div class="element-btn el-creature" data-el="creature" onclick="selectElement(this)" data-name="Creature" data-desc="Living organism. Affected by radiation. Can mutate. Moves autonomously.">
+            <span class="el-symbol">👾</span><span class="el-name">CREATURE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🔴 FORBIDDEN</div>
+        <div class="element-grid">
+          <div class="element-btn el-antimatter" data-el="antimatter" onclick="selectElement(this)" data-name="Antimatter" data-desc="Annihilates on contact with matter. Cataclysmic release of energy. EXTREMELY DANGEROUS.">
+            <span class="el-symbol">AM</span><span class="el-name">ANTI-MATTER</span>
+          </div>
+          <div class="element-btn el-black-hole" data-el="blackhole" onclick="selectElement(this)" data-name="Micro Black Hole" data-desc="Consumes all nearby matter. Emits Hawking radiation. Inevitable destruction.">
+            <span class="el-symbol">●</span><span class="el-name">BLACK HOLE</span>
+          </div>
+          <div class="element-btn el-darkmat el-locked" data-el="darkmatter" id="btn-darkmatter" onclick="selectElement(this)" data-name="Dark Matter [LOCKED]" data-desc="Unknown properties. Unlock by achieving 10+ discoveries.">
+            <span class="el-symbol">?</span><span class="el-name">DARK MAT</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🗑 TOOLS</div>
+        <div class="element-grid">
+          <div class="element-btn el-eraser" data-el="eraser" onclick="selectElement(this)" data-name="Eraser" data-desc="Remove cells from the sandbox.">
+            <span class="el-symbol">✕</span><span class="el-name">ERASE</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">📊 DISCOVERIES</div>
+        <div id="discovery-list" style="font-size:9px; color:var(--text-dim); padding:4px; line-height:1.8;">
+          Experiment to unlock...
+        </div>
+        <div class="unlock-bar"><div class="unlock-fill" id="unlock-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div class="panel-section">
+        <div class="panel-title">🖌 BRUSH</div>
+        <div class="slider-group">
+          <div class="slider-row">
+            <span class="slider-label">SIZE</span>
+            <input type="range" id="brush-size" min="1" max="12" value="3" oninput="updateBrush()">
+            <span class="slider-val" id="brush-size-val">3</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">DENSITY</span>
+            <input type="range" id="brush-density" min="1" max="10" value="8" oninput="updateBrush()">
+            <span class="slider-val" id="brush-density-val">8</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">ENERGY</span>
+            <input type="range" id="brush-energy" min="1" max="20" value="5" oninput="updateBrush()">
+            <span class="slider-val" id="brush-energy-val">5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section" id="rad-meter">
+        <div class="panel-title">☢ RADIATION LEVELS</div>
+        <div style="font-size:9px; color:var(--text-dim); margin-bottom:3px;">ALPHA</div>
+        <div class="meter-bar"><div class="meter-fill meter-rad" id="meter-alpha" style="width:0%"></div></div>
+        <div style="font-size:9px; color:var(--text-dim); margin:5px 0 3px">BETA</div>
+        <div class="meter-bar"><div class="meter-fill meter-rad" id="meter-beta" style="width:0%"></div></div>
+        <div style="font-size:9px; color:var(--text-dim); margin:5px 0 3px">GAMMA</div>
+        <div class="meter-bar"><div class="meter-fill meter-rad" id="meter-gamma" style="width:0%"></div></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🌡 ENVIRONMENT</div>
+        <div style="font-size:9px; color:var(--text-dim); margin-bottom:3px;">TEMPERATURE</div>
+        <div class="meter-bar"><div class="meter-fill meter-heat" id="meter-temp" style="width:5%"></div></div>
+        <div style="font-size:9px; color:var(--text-dim); margin:5px 0 3px">PRESSURE</div>
+        <div class="meter-bar"><div class="meter-fill meter-power" id="meter-pressure" style="width:2%"></div></div>
+        <div style="font-size:9px; color:var(--text-dim); margin:5px 0 3px">POWER OUTPUT</div>
+        <div class="meter-bar"><div class="meter-fill meter-power" id="meter-power" style="width:0%"></div></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">⏱ SIMULATION</div>
+        <div id="sim-info" style="font-size:10px; color:var(--text-dim); line-height:1.8; padding:4px;">
+          <div>TIME: <span style="color:var(--neon-cyan)" id="sim-time">0s</span></div>
+          <div>TICK: <span style="color:var(--neon-cyan)" id="sim-tick">0</span></div>
+          <div>CELLS: <span style="color:var(--neon-cyan)" id="sim-cells">0</span></div>
+          <div>CHAIN: <span style="color:var(--neon-orange)" id="sim-chain">STABLE</span></div>
+          <div>WEATHER: <span style="color:var(--neon-blue)" id="sim-weather">CLEAR</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">🏆 ACHIEVEMENTS</div>
+        <div id="ach-list" style="font-size:9px; color:var(--text-dim); padding:4px; line-height:1.8; min-height:50px;">
+          None yet...
+        </div>
+      </div>
+
+      <div class="panel-section" style="flex:1;">
+        <div class="panel-title">📋 EVENT LOG</div>
+        <div id="event-log"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div id="bottom-bar">
+      <div class="tool-btn active" id="tool-draw" onclick="setTool('draw',this)">
+        ✏ DRAW <span class="tool-key">1</span>
+      </div>
+      <div class="tool-btn" id="tool-line" onclick="setTool('line',this)">
+        ╱ LINE <span class="tool-key">2</span>
+      </div>
+      <div class="tool-btn" id="tool-rect" onclick="setTool('rect',this)">
+        □ RECT <span class="tool-key">3</span>
+      </div>
+      <div class="tool-btn" id="tool-circle" onclick="setTool('circle',this)">
+        ○ FILL <span class="tool-key">4</span>
+      </div>
+      <div class="tool-btn" id="tool-spray" onclick="setTool('spray',this)">
+        ∷ SPRAY <span class="tool-key">5</span>
+      </div>
+      <div class="tool-btn" id="tool-bomb" onclick="setTool('bomb',this)">
+        💣 BOMB <span class="tool-key">6</span>
+      </div>
+      <div class="tool-btn" id="tool-nuke" onclick="setTool('nuke',this)">
+        ☢ NUKE <span class="tool-key">7</span>
+      </div>
+      <div class="tool-btn" id="tool-pick" onclick="setTool('pick',this)">
+        🔍 INSPECT <span class="tool-key">I</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOVERY POPUP -->
+  <div id="discovery-popup">
+    <div class="disc-title">◆ NEW DISCOVERY ◆</div>
+    <div class="disc-name" id="disc-name">Fission!</div>
+    <div class="disc-desc" id="disc-desc">You've triggered nuclear fission!</div>
+    <button class="hud-btn" onclick="closeDiscovery()" style="margin-top:8px">CONTINUE →</button>
+  </div>
+
+  <!-- ACHIEVEMENT POPUP -->
+  <div id="achievement-popup">
+    <div class="ach-icon" id="ach-icon">🏆</div>
+    <div class="ach-text">
+      <div class="ach-title">ACHIEVEMENT UNLOCKED</div>
+      <div class="ach-name" id="ach-name">First Reaction</div>
+    </div>
+  </div>
+
+  <!-- TOOLTIP -->
+  <div id="tooltip">
+    <div class="tt-name" id="tt-name">Element</div>
+    <div class="tt-desc" id="tt-desc">Description</div>
+    <div class="tt-stats" id="tt-stats"></div>
+  </div>
+
+  <!-- MENU -->
+  <div id="menu-overlay">
+    <div class="menu-title">⚛ REACTOR ZERO</div>
+    <div class="menu-subtitle">NUCLEAR SANDBOX SIMULATION</div>
+    <div class="menu-btn primary" onclick="startGame()">▶ START EXPERIMENT</div>
+    <div class="menu-btn" onclick="loadGame()">↩ LOAD SAVE</div>
+    <div class="menu-btn" onclick="showTutorial()">? TUTORIAL</div>
+    <div style="margin-top:16px; font-size:10px; color:var(--text-dim); text-align:center; max-width:320px; line-height:1.6;">
+      ⚠ WARNING: This simulation contains extremely unstable materials.<br>
+      Experimenting with nuclear reactions may have irreversible consequences.<br>
+      <span style="color:var(--neon-orange)">Science was never meant to be safe.</span>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div id="pause-overlay" class="hidden">
+    <div class="pause-title">⏸ PAUSED</div>
+    <div style="font-size:12px; color:var(--text-dim); letter-spacing:2px; margin-top:8px;">PRESS P OR CLICK RESUME</div>
+    <button class="menu-btn primary" onclick="togglePause()" style="margin-top:20px; width:200px;">▶ RESUME</button>
+    <button class="menu-btn" onclick="saveGame()" style="margin-top:8px; width:200px;">💾 SAVE GAME</button>
+    <button class="menu-btn" onclick="showMenu()" style="margin-top:8px; width:200px;">☰ MAIN MENU</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  REACTOR ZERO — NUCLEAR SANDBOX
+//  Full simulation engine
+// ============================================================
+
+const CELL = 8; // cell size in pixels
+let W, H, COLS, ROWS;
+let canvas, pCanvas, ctx, pCtx;
+let cells, heat, radiation, pressure;
+let particles = [];
+let gameRunning = false;
+let paused = false;
+let slowMo = false;
+let tickCount = 0;
+let gameTime = 0;
+let score = 0;
+let totalReactions = 0;
+let powerOutput = 0;
+
+// Selected element & tool
+let selectedEl = 'uranium';
+let currentTool = 'draw';
+let brushSize = 3;
+let brushDensity = 8;
+let brushEnergy = 5;
+
+// Mouse state
+let mouseDown = false;
+let mouseX = 0, mouseY = 0;
+let lastMouseX = 0, lastMouseY = 0;
+let toolStart = null;
+
+// Simulation params
+let globalRadiation = 0;
+let globalTemp = 20;
+let chainReaction = false;
+let chainIntensity = 0;
+let weatherType = 'CLEAR';
+let weatherTimer = 0;
+
+// Discoveries & achievements
+let discoveries = new Set();
+let achievements = new Set();
+let discoveryDefs = {
+  fission: { name: 'Nuclear Fission', desc: 'Uranium splits releasing massive energy and neutrons.', icon: '⚛' },
+  chain_reaction: { name: 'Chain Reaction', desc: 'Self-sustaining nuclear fission cascade initiated.', icon: '🔗' },
+  meltdown: { name: 'Meltdown!', desc: 'Reactor core failure. Catastrophic heat release.', icon: '☠' },
+  fusion: { name: 'Fusion Ignition', desc: 'Deuterium-Tritium fusion achieved! Stars are born.', icon: '⭐' },
+  plasma_arc: { name: 'Plasma Arc', desc: 'Sustained plasma state achieved at extreme temperatures.', icon: '⚡' },
+  transmutation: { name: 'Transmutation', desc: 'Element conversion via neutron bombardment.', icon: '🔄' },
+  critical_mass: { name: 'Critical Mass', desc: 'Fissile material reached self-sustaining criticality.', icon: '💥' },
+  cold_fusion: { name: 'Cold Fusion', desc: 'Low-temperature fusion anomaly detected. Impossible?', icon: '❄' },
+  antimatter_annihilation: { name: 'Annihilation', desc: 'Matter-antimatter collision. Complete energy release.', icon: '✨' },
+  mutation: { name: 'Mutation', desc: 'Organism exposed to radiation has mutated!', icon: '🧬' },
+  black_hole_creation: { name: 'Singularity', desc: 'Spacetime curvature detected. Event horizon forming.', icon: '🌀' },
+  nuclear_winter: { name: 'Nuclear Winter', desc: 'Multiple explosions have altered local climate.', icon: '🌨' },
+  super_criticality: { name: 'Prompt Criticality', desc: 'Uncontrolled exponential fission. Tsar Bomba territory.', icon: '🔴' },
+  acid_reaction: { name: 'Corrosion', desc: 'Acid dissolved radioactive material. Toxic byproduct.', icon: '🧪' },
+  steam_explosion: { name: 'Steam Explosion', desc: 'Water flash-vaporized by extreme heat.', icon: '💨' },
+  graphite_fire: { name: 'Graphite Fire', desc: 'Moderator ignited. Chernobyl deja vu.', icon: '🔥' },
+  ice_quench: { name: 'Emergency Quench', desc: 'Cryogenic shutdown successfully initiated.', icon: '❄' },
+  forbidden_element: { name: 'Forbidden Knowledge', desc: 'You have accessed restricted experimental materials.', icon: '⛔' },
+  gas_explosion: { name: 'Fuel-Air Detonation', desc: 'Volatile gas cloud ignited catastrophically.', icon: '💣' },
+  power_record: { name: 'Power Surge', desc: 'Reactor output exceeded 1000 MW.', icon: '⚡' },
+};
+
+let achievementDefs = {
+  first_place: { name: 'First Experiment', icon: '🔬', cond: () => tickCount > 60 },
+  first_fission: { name: 'Fission Pioneer', icon: '⚛', cond: () => discoveries.has('fission') },
+  chain_master: { name: 'Chain Master', icon: '🔗', cond: () => totalReactions > 100 },
+  destroyer: { name: 'Destroyer of Worlds', icon: '💥', cond: () => discoveries.has('meltdown') },
+  scientist: { name: 'Nuclear Scientist', icon: '👨‍🔬', cond: () => discoveries.size >= 5 },
+  god: { name: 'Godlike Power', icon: '⭐', cond: () => discoveries.size >= 15 },
+  pacifist: { name: 'Pacifist', icon: '☮', cond: () => score > 500 && !discoveries.has('meltdown') },
+  chaotic: { name: 'Agent of Chaos', icon: '🌀', cond: () => discoveries.has('antimatter_annihilation') },
+};
+
+// ============================================================
+//  CELL TYPES
+// ============================================================
+const TYPE = {
+  EMPTY: 0,
+  URANIUM: 1,
+  PLUTONIUM: 2,
+  THORIUM: 3,
+  NEUTRON: 4,
+  WATER: 5,
+  GRAPHITE: 6,
+  LEAD: 7,
+  FIRE: 8,
+  PLASMA: 9,
+  ICE: 10,
+  ANTIMATTER: 11,
+  CREATURE: 12,
+  METAL: 13,
+  GAS: 14,
+  ACID: 15,
+  FISSION_PRODUCT: 16,
+  FALLOUT: 17,
+  BLACKHOLE: 18,
+  DARKMATTER: 19,
+  TRITIUM: 20,
+  DEUTERIUM: 21,
+  SMOKE: 22,
+  STEAM: 23,
+  LAVA: 24,
+  MUTANT: 25,
+};
+
+const EL_TO_TYPE = {
+  uranium: TYPE.URANIUM,
+  plutonium: TYPE.PLUTONIUM,
+  thorium: TYPE.THORIUM,
+  neutron: TYPE.NEUTRON,
+  water: TYPE.WATER,
+  graphite: TYPE.GRAPHITE,
+  lead: TYPE.LEAD,
+  fire: TYPE.FIRE,
+  plasma: TYPE.PLASMA,
+  ice: TYPE.ICE,
+  antimatter: TYPE.ANTIMATTER,
+  creature: TYPE.CREATURE,
+  metal: TYPE.METAL,
+  gas: TYPE.GAS,
+  acid: TYPE.ACID,
+  blackhole: TYPE.BLACKHOLE,
+  darkmatter: TYPE.DARKMATTER,
+  tritium: TYPE.TRITIUM,
+  deuterium: TYPE.DEUTERIUM,
+  eraser: -1,
+};
+
+// Cell visual properties
+const CELL_COLORS = {
+  [TYPE.URANIUM]: () => `hsl(${140 + Math.random()*10}, 100%, ${50 + Math.random()*10}%)`,
+  [TYPE.PLUTONIUM]: () => `hsl(${200 + Math.random()*10}, 100%, ${55 + Math.random()*8}%)`,
+  [TYPE.THORIUM]: () => `hsl(${45 + Math.random()*10}, 90%, ${45 + Math.random()*10}%)`,
+  [TYPE.NEUTRON]: () => `hsl(${230 + Math.random()*20}, 60%, ${80 + Math.random()*10}%)`,
+  [TYPE.WATER]: () => `hsl(${210 + Math.random()*15}, 90%, ${55 + Math.random()*10}%)`,
+  [TYPE.GRAPHITE]: () => `hsl(0, 0%, ${35 + Math.random()*15}%)`,
+  [TYPE.LEAD]: () => `hsl(280, 20%, ${45 + Math.random()*10}%)`,
+  [TYPE.FIRE]: () => `hsl(${20 + Math.random()*25}, 100%, ${55 + Math.random()*15}%)`,
+  [TYPE.PLASMA]: () => `hsl(${300 + Math.random()*30}, 100%, ${65 + Math.random()*15}%)`,
+  [TYPE.ICE]: () => `hsl(${195 + Math.random()*10}, 80%, ${80 + Math.random()*10}%)`,
+  [TYPE.ANTIMATTER]: () => `hsl(${0 + Math.random()*10}, 100%, ${50 + Math.random()*15}%)`,
+  [TYPE.CREATURE]: () => `hsl(${130 + Math.random()*20}, 80%, ${45 + Math.random()*15}%)`,
+  [TYPE.METAL]: () => `hsl(${40 + Math.random()*10}, 40%, ${50 + Math.random()*10}%)`,
+  [TYPE.GAS]: () => `hsl(120, 30%, ${75 + Math.random()*10}%)`,
+  [TYPE.ACID]: () => `hsl(${80 + Math.random()*20}, 100%, ${55 + Math.random()*10}%)`,
+  [TYPE.FISSION_PRODUCT]: () => `hsl(${60 + Math.random()*40}, 100%, ${60 + Math.random()*15}%)`,
+  [TYPE.FALLOUT]: () => `hsl(${80 + Math.random()*20}, 60%, ${40 + Math.random()*15}%)`,
+  [TYPE.BLACKHOLE]: () => `hsl(280, 100%, ${10 + Math.random()*10}%)`,
+  [TYPE.DARKMATTER]: () => `hsl(${280 + Math.random()*20}, 80%, ${25 + Math.random()*10}%)`,
+  [TYPE.TRITIUM]: () => `hsl(${30 + Math.random()*10}, 100%, ${55 + Math.random()*10}%)`,
+  [TYPE.DEUTERIUM]: () => `hsl(${50 + Math.random()*10}, 100%, ${55 + Math.random()*10}%)`,
+  [TYPE.SMOKE]: () => `hsl(0, 0%, ${20 + Math.random()*15}%)`,
+  [TYPE.STEAM]: () => `hsl(200, 30%, ${80 + Math.random()*10}%)`,
+  [TYPE.LAVA]: () => `hsl(${10 + Math.random()*15}, 100%, ${45 + Math.random()*10}%)`,
+  [TYPE.MUTANT]: () => `hsl(${130 + Math.random()*40}, 100%, ${40 + Math.random()*10}%)`,
+};
+
+// Cell metadata per cell: type(Uint8), energy(Float32), radiation(Float32), age(Uint16), flags(Uint8)
+// Packed as flat arrays for performance
+let cellType, cellEnergy, cellRadiation, cellAge, cellFlags;
+let cellMoved; // to track if cell was updated this tick
+
+// Particle system
+class Particle {
+  constructor(x, y, vx, vy, color, life, size, type) {
+    this.x = x; this.y = y;
+    this.vx = vx; this.vy = vy;
+    this.color = color;
+    this.life = life; this.maxLife = life;
+    this.size = size || 2;
+    this.type = type || 'dot'; // dot, spark, glow, smoke, radiation
+    this.alpha = 1;
+  }
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.vy += 0.05 * dt; // slight gravity for most
+    this.vx *= 0.98;
+    this.life -= dt;
+    this.alpha = Math.max(0, this.life / this.maxLife);
+    if (this.type === 'smoke') {
+      this.vy -= 0.08 * dt;
+      this.vy *= 0.95;
+      this.vx *= 0.95;
+      this.size += 0.01 * dt;
+    }
+    if (this.type === 'radiation') {
+      this.vx += (Math.random() - 0.5) * 0.3;
+      this.vy += (Math.random() - 0.5) * 0.3;
+    }
+  }
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    if (this.type === 'glow') {
+      const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 2);
+      grd.addColorStop(0, this.color);
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'smoke') {
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = this.size * 2;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+function initGame() {
+  canvas = document.getElementById('main-canvas');
+  pCanvas = document.getElementById('particle-canvas');
+  ctx = canvas.getContext('2d');
+  pCtx = pCanvas.getContext('2d');
+
+  resizeGame();
+  window.addEventListener('resize', resizeGame);
+
+  // Mouse events
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('mouseleave', onMouseUp);
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Touch events
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; onMouseDown({clientX: t.clientX, clientY: t.clientY, button: 0}); }, {passive: false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; onMouseMove({clientX: t.clientX, clientY: t.clientY}); }, {passive: false});
+  canvas.addEventListener('touchend', e => { e.preventDefault(); onMouseUp(); }, {passive: false});
+
+  // Keyboard
+  document.addEventListener('keydown', onKeyDown);
+
+  // Tooltip
+  document.querySelectorAll('[data-name]').forEach(el => {
+    el.addEventListener('mouseenter', showTooltip);
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('mousemove', moveTooltip);
+  });
+}
+
+function resizeGame() {
+  const gameArea = document.getElementById('game-wrapper');
+  const panelW = 200;
+  const topH = 52;
+  const botH = 44;
+
+  const availW = window.innerWidth - panelW * 2;
+  const availH = window.innerHeight - topH - botH;
+
+  COLS = Math.floor(availW / CELL);
+  ROWS = Math.floor(availH / CELL);
+  W = COLS * CELL;
+  H = ROWS * CELL;
+
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.left = panelW + 'px';
+  canvas.style.top = topH + 'px';
+
+  pCanvas.width = W;
+  pCanvas.height = H;
+  pCanvas.style.left = panelW + 'px';
+  pCanvas.style.top = topH + 'px';
+
+  const overlay = document.getElementById('effect-overlay');
+  overlay.width = W; overlay.height = H;
+  overlay.style.left = panelW + 'px';
+  overlay.style.top = topH + 'px';
+
+  initArrays();
+}
+
+function initArrays() {
+  const size = COLS * ROWS;
+  cellType = new Uint8Array(size);
+  cellEnergy = new Float32Array(size);
+  cellRadiation = new Float32Array(size);
+  cellAge = new Uint16Array(size);
+  cellFlags = new Uint8Array(size);
+  cellMoved = new Uint8Array(size);
+}
+
+function idx(c, r) { return r * COLS + c; }
+function inBounds(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+let lastTime = 0;
+let accumulator = 0;
+const FIXED_DT = 1000 / 30; // 30 ticks per second
+
+function gameLoop(ts) {
+  requestAnimationFrame(gameLoop);
+  if (!gameRunning || paused) return;
+
+  const dt = Math.min(ts - lastTime, 100);
+  lastTime = ts;
+  gameTime += dt;
+  accumulator += slowMo ? dt * 0.15 : dt;
+
+  while (accumulator >= FIXED_DT) {
+    tick();
+    accumulator -= FIXED_DT;
+  }
+
+  render();
+  renderParticles();
+  updateHUD();
+}
+
+// ============================================================
+//  SIMULATION TICK
+// ============================================================
+const DIRS = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
+const DIRS4 = [[-1,0],[1,0],[0,-1],[0,1]];
+
+function tick() {
+  tickCount++;
+  cellMoved.fill(0);
+
+  // Decay global stats
+  globalRadiation *= 0.98;
+  powerOutput *= 0.95;
+  chainIntensity *= 0.9;
+  chainReaction = chainIntensity > 10;
+
+  // Weather
+  weatherTimer--;
+  if (weatherTimer <= 0) {
+    const weathers = ['CLEAR','RAIN','STORM','WIND','FALLOUT','SOLAR FLARE'];
+    weatherType = weathers[Math.floor(Math.random() * weathers.length)];
+    weatherTimer = 200 + Math.floor(Math.random() * 400);
+    if (weatherType !== 'CLEAR') addLog(`Weather changed: ${weatherType}`, 'info');
+    document.getElementById('sim-weather').textContent = weatherType;
+  }
+
+  // Process cells in random order for fairness
+  const order = shuffledIndices();
+  for (let i = 0; i < order.length; i++) {
+    const i1 = order[i];
+    if (cellMoved[i1]) continue;
+    const r = Math.floor(i1 / COLS);
+    const c = i1 % COLS;
+    processCell(c, r);
+  }
+
+  // Spread heat and radiation
+  spreadHeatRad();
+
+  // Random events
+  if (tickCount % 300 === 0) randomEvent();
+
+  // Score
+  score += Math.floor(powerOutput * 0.01);
+  checkAchievements();
+}
+
+let _shuffleArr = null;
+function shuffledIndices() {
+  const n = COLS * ROWS;
+  if (!_shuffleArr || _shuffleArr.length !== n) {
+    _shuffleArr = new Int32Array(n);
+    for (let i = 0; i < n; i++) _shuffleArr[i] = i;
+  }
+  // Fisher-Yates partial shuffle
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = _shuffleArr[i]; _shuffleArr[i] = _shuffleArr[j]; _shuffleArr[j] = tmp;
+  }
+  return _shuffleArr;
+}
+
+function processCell(c, r) {
+  const i = idx(c, r);
+  const type = cellType[i];
+  if (type === TYPE.EMPTY) return;
+
+  cellAge[i]++;
+
+  switch(type) {
+    case TYPE.NEUTRON: processNeutron(c, r, i); break;
+    case TYPE.URANIUM: processUranium(c, r, i); break;
+    case TYPE.PLUTONIUM: processPlutonium(c, r, i); break;
+    case TYPE.THORIUM: processThorium(c, r, i); break;
+    case TYPE.FIRE: processFire(c, r, i); break;
+    case TYPE.PLASMA: processPlasma(c, r, i); break;
+    case TYPE.WATER: processWater(c, r, i); break;
+    case TYPE.ICE: processIce(c, r, i); break;
+    case TYPE.GAS: processGas(c, r, i); break;
+    case TYPE.ACID: processAcid(c, r, i); break;
+    case TYPE.CREATURE: processCreature(c, r, i); break;
+    case TYPE.MUTANT: processMutant(c, r, i); break;
+    case TYPE.ANTIMATTER: processAntimatter(c, r, i); break;
+    case TYPE.BLACKHOLE: processBlackhole(c, r, i); break;
+    case TYPE.DARKMATTER: processDarkmatter(c, r, i); break;
+    case TYPE.FISSION_PRODUCT: processFissionProduct(c, r, i); break;
+    case TYPE.FALLOUT: processFallout(c, r, i); break;
+    case TYPE.SMOKE: processSmoke(c, r, i); break;
+    case TYPE.STEAM: processSteam(c, r, i); break;
+    case TYPE.LAVA: processLava(c, r, i); break;
+    case TYPE.GRAPHITE: processGraphite(c, r, i); break;
+    case TYPE.TRITIUM: processTritium(c, r, i); break;
+    case TYPE.DEUTERIUM: processDeuterium(c, r, i); break;
+    case TYPE.METAL: processMetal(c, r, i); break;
+  }
+}
+
+function processNeutron(c, r, i) {
+  // Neutrons move fast and trigger fission
+  const angle = (cellFlags[i] / 255) * Math.PI * 2;
+  const nc = c + Math.round(Math.cos(angle) * 2);
+  const nr = r + Math.round(Math.sin(angle) * 2);
+
+  // Lifetime
+  if (cellAge[i] > 20) { removeCell(i); return; }
+
+  if (inBounds(nc, nr)) {
+    const ni = idx(nc, nr);
+    const nt = cellType[ni];
+    if (nt === TYPE.URANIUM || nt === TYPE.PLUTONIUM) {
+      triggerFission(nc, nr, ni, nt);
+      removeCell(i);
+    } else if (nt === TYPE.THORIUM) {
+      // Transmutation
+      cellType[ni] = TYPE.URANIUM;
+      cellEnergy[ni] = 0.5;
+      removeCell(i);
+      triggerDiscovery('transmutation');
+      spawnParticles(nc * CELL + 4, nr * CELL + 4, 'glow', '#00ff88', 5);
+    } else if (nt === TYPE.WATER) {
+      // Moderated - slow down
+      cellFlags[i] = (cellFlags[i] + 64) & 0xFF;
+      cellAge[i] += 3;
+    } else if (nt === TYPE.GRAPHITE) {
+      cellFlags[i] = (cellFlags[i] + 32) & 0xFF;
+    } else if (nt === TYPE.LEAD) {
+      removeCell(i); // absorbed
+    } else if (nt === TYPE.DEUTERIUM || nt === TYPE.TRITIUM) {
+      // Possible fusion trigger
+      if (cellEnergy[i] > 3) {
+        triggerFusion(nc, nr, ni, nt);
+        removeCell(i);
+      }
+    } else if (nt === TYPE.EMPTY) {
+      // Move neutron
+      setCell(nc, nr, TYPE.NEUTRON, cellEnergy[i], 0, cellFlags[i]);
+      removeCell(i);
+    }
+  } else {
+    removeCell(i);
+  }
+}
+
+function triggerFission(c, r, i, sourceType) {
+  totalReactions++;
+  const x = c * CELL + 4, y = r * CELL + 4;
+  const energy = sourceType === TYPE.PLUTONIUM ? 2.5 : 1.5;
+
+  // Remove the fissile cell
+  cellType[i] = TYPE.FISSION_PRODUCT;
+  cellEnergy[i] = energy * 3;
+  cellRadiation[i] = 1.0;
+  cellAge[i] = 0;
+
+  globalRadiation += energy * 0.2;
+  powerOutput += energy * 50;
+  chainIntensity += energy * 2;
+  score += 10;
+
+  // Emit 2-3 neutrons
+  const nNeutrons = 2 + (sourceType === TYPE.PLUTONIUM ? 1 : 0);
+  for (let n = 0; n < nNeutrons; n++) {
+    const angle = (n / nNeutrons) * Math.PI * 2 + Math.random() * 0.5;
+    const nc = c + Math.round(Math.cos(angle));
+    const nr = r + Math.round(Math.sin(angle));
+    if (inBounds(nc, nr) && cellType[idx(nc, nr)] === TYPE.EMPTY) {
+      const ni = idx(nc, nr);
+      cellType[ni] = TYPE.NEUTRON;
+      cellEnergy[ni] = 1.5 + Math.random();
+      cellAge[ni] = 0;
+      cellFlags[ni] = Math.floor((angle / (Math.PI * 2)) * 255);
+    }
+  }
+
+  // Heat wave
+  heatWave(c, r, energy * 3, 4);
+  spawnExplosion(x, y, energy * 0.5, sourceType === TYPE.PLUTONIUM ? '#00c8ff' : '#00ff64');
+  triggerDiscovery('fission');
+
+  if (chainIntensity > 30) triggerDiscovery('chain_reaction');
+  if (chainIntensity > 80) triggerDiscovery('critical_mass');
+  if (chainIntensity > 150) triggerDiscovery('super_criticality');
+}
+
+function triggerFusion(c, r, i, sourceType) {
+  totalReactions++;
+  const x = c * CELL + 4, y = r * CELL + 4;
+
+  cellType[i] = TYPE.PLASMA;
+  cellEnergy[i] = 10;
+  cellAge[i] = 0;
+
+  globalRadiation += 0.8;
+  powerOutput += 300;
+  chainIntensity += 5;
+  score += 50;
+
+  heatWave(c, r, 8, 6);
+  spawnExplosion(x, y, 2.0, '#ffff00');
+  triggerDiscovery('fusion');
+
+  // Check for cold fusion (if nearby ice)
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (inBounds(nc, nr) && cellType[idx(nc, nr)] === TYPE.ICE) {
+      triggerDiscovery('cold_fusion');
+      break;
+    }
+  }
+}
+
+function processUranium(c, r, i) {
+  cellRadiation[i] = Math.min(1, cellRadiation[i] + 0.001);
+  // Spontaneous decay chance
+  if (Math.random() < 0.0002) {
+    const angle = Math.random() * Math.PI * 2;
+    const nc = c + Math.round(Math.cos(angle));
+    const nr = r + Math.round(Math.sin(angle));
+    if (inBounds(nc, nr) && cellType[idx(nc, nr)] === TYPE.EMPTY) {
+      const ni = idx(nc, nr);
+      cellType[ni] = TYPE.NEUTRON;
+      cellFlags[ni] = Math.floor((angle / (Math.PI * 2)) * 255);
+      cellAge[ni] = 0;
+      cellEnergy[ni] = 0.5;
+    }
+  }
+  // Meltdown at extreme heat
+  if (cellEnergy[i] > 8) {
+    cellType[i] = TYPE.LAVA;
+    triggerDiscovery('meltdown');
+    heatWave(c, r, 5, 5);
+    spawnParticles(c * CELL + 4, r * CELL + 4, 'glow', '#ff4400', 15);
+  }
+}
+
+function processPlutonium(c, r, i) {
+  cellRadiation[i] = Math.min(1, cellRadiation[i] + 0.003);
+  // Higher decay rate
+  if (Math.random() < 0.0005) {
+    const angle = Math.random() * Math.PI * 2;
+    const nc = c + Math.round(Math.cos(angle));
+    const nr = r + Math.round(Math.sin(angle));
+    if (inBounds(nc, nr) && cellType[idx(nc, nr)] === TYPE.EMPTY) {
+      const ni = idx(nc, nr);
+      cellType[ni] = TYPE.NEUTRON;
+      cellFlags[ni] = Math.floor((angle / (Math.PI * 2)) * 255);
+      cellAge[ni] = 0;
+      cellEnergy[ni] = 2.0;
+    }
+  }
+  if (cellEnergy[i] > 6) {
+    cellType[i] = TYPE.LAVA;
+    triggerDiscovery('meltdown');
+    heatWave(c, r, 8, 6);
+    spawnExplosion(c * CELL + 4, r * CELL + 4, 1.5, '#00c8ff');
+  }
+}
+
+function processThorium(c, r, i) {
+  cellRadiation[i] = Math.min(0.3, cellRadiation[i] + 0.0005);
+  if (cellEnergy[i] > 10) {
+    cellType[i] = TYPE.FISSION_PRODUCT;
+    cellEnergy[i] = 3;
+  }
+}
+
+function processTritium(c, r, i) {
+  cellRadiation[i] = Math.min(0.6, cellRadiation[i] + 0.002);
+  // Check adjacency to deuterium for fusion
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    if (cellType[ni] === TYPE.DEUTERIUM && (cellEnergy[i] + cellEnergy[ni]) > 5) {
+      triggerFusion(c, r, i, TYPE.TRITIUM);
+      cellType[ni] = TYPE.EMPTY;
+      return;
+    }
+  }
+}
+
+function processDeuterium(c, r, i) {
+  cellRadiation[i] = Math.min(0.3, cellRadiation[i] + 0.001);
+}
+
+function processFire(c, r, i) {
+  cellAge[i]++;
+  if (cellAge[i] > 40 + Math.random() * 20) {
+    cellType[i] = TYPE.SMOKE;
+    cellAge[i] = 0;
+    cellEnergy[i] = 0.3;
+    return;
+  }
+  cellEnergy[i] = Math.min(5, cellEnergy[i] + 0.1);
+
+  // Spread fire
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    const nt = cellType[ni];
+    if (nt === TYPE.GAS && Math.random() < 0.3) {
+      triggerGasExplosion(nc, nr, ni);
+    } else if (nt === TYPE.GRAPHITE && Math.random() < 0.05) {
+      cellType[ni] = TYPE.FIRE;
+      cellAge[ni] = 0;
+      triggerDiscovery('graphite_fire');
+    } else if (nt === TYPE.WATER) {
+      cellType[i] = TYPE.SMOKE;
+      cellType[ni] = TYPE.STEAM;
+      cellAge[i] = 0;
+      triggerDiscovery('steam_explosion');
+      spawnParticles(nc * CELL + 4, nr * CELL + 4, 'smoke', 'rgba(200,220,255,0.5)', 10);
+      return;
+    } else if (nt === TYPE.ICE) {
+      cellType[ni] = TYPE.WATER;
+      cellType[i] = TYPE.STEAM;
+      return;
+    }
+  }
+  spawnParticles(c * CELL + 4, r * CELL + 4 - 2, 'fire', '#ff6600', 2);
+}
+
+function processPlasma(c, r, i) {
+  cellAge[i]++;
+  if (cellAge[i] > 60) {
+    cellType[i] = TYPE.FIRE;
+    cellAge[i] = 0;
+    return;
+  }
+  cellEnergy[i] = Math.min(15, cellEnergy[i] + 0.3);
+  heatWave(c, r, 1, 2);
+
+  // Plasma particle effects
+  if (Math.random() < 0.3) {
+    spawnParticles(c * CELL + 4, r * CELL + 4, 'spark', '#ff00ff', 1);
+  }
+}
+
+function processWater(c, r, i) {
+  // Absorb heat
+  if (cellEnergy[i] > 3) {
+    cellType[i] = TYPE.STEAM;
+    cellAge[i] = 0;
+    cellEnergy[i] = 1;
+    triggerDiscovery('steam_explosion');
+    return;
+  }
+  cellEnergy[i] = Math.max(0, cellEnergy[i] - 0.05);
+
+  // Flow downward
+  if (r + 1 < ROWS && cellType[idx(c, r+1)] === TYPE.EMPTY) {
+    swap(c, r, c, r + 1);
+    return;
+  }
+  const side = Math.random() < 0.5 ? -1 : 1;
+  if (inBounds(c + side, r) && cellType[idx(c + side, r)] === TYPE.EMPTY) {
+    swap(c, r, c + side, r);
+  }
+}
+
+function processIce(c, r, i) {
+  if (cellEnergy[i] > 1) {
+    cellType[i] = TYPE.WATER;
+    cellAge[i] = 0;
+    return;
+  }
+  // Absorb nearby heat aggressively
+  for (let [dc, dr] of DIRS) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    if (cellEnergy[ni] > 0) {
+      cellEnergy[ni] = Math.max(0, cellEnergy[ni] - 0.5);
+      triggerDiscovery('ice_quench');
+    }
+  }
+}
+
+function processGas(c, r, i) {
+  // Gas rises
+  if (r - 1 >= 0 && cellType[idx(c, r-1)] === TYPE.EMPTY) {
+    swap(c, r, c, r - 1);
+    return;
+  }
+  // Explode if surrounded by fire
+  let fireCount = 0;
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    if (cellType[idx(nc, nr)] === TYPE.FIRE || cellType[idx(nc, nr)] === TYPE.PLASMA) fireCount++;
+  }
+  if (fireCount > 0 && Math.random() < 0.3) {
+    triggerGasExplosion(c, r, i);
+  }
+  cellAge[i]++;
+  if (cellAge[i] > 200) removeCell(i);
+}
+
+function triggerGasExplosion(c, r, i) {
+  const x = c * CELL + 4, y = r * CELL + 4;
+  removeCell(i);
+  heatWave(c, r, 3, 4);
+  spawnExplosion(x, y, 1.0, '#ffaa00');
+  triggerDiscovery('gas_explosion');
+  shakeScreen(5);
+
+  // Chain explosion to nearby gas
+  for (let [dc, dr] of DIRS) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    if (cellType[ni] === TYPE.GAS && Math.random() < 0.6) {
+      triggerGasExplosion(nc, nr, ni);
+    }
+  }
+}
+
+function processAcid(c, r, i) {
+  // Dissolve nearby materials
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    const nt = cellType[ni];
+    if (nt !== TYPE.EMPTY && nt !== TYPE.ACID && nt !== TYPE.LEAD && nt !== TYPE.BLACKHOLE) {
+      if (Math.random() < 0.02) {
+        removeCell(ni);
+        if (nt === TYPE.URANIUM || nt === TYPE.PLUTONIUM) {
+          cellRadiation[i] = Math.min(1, cellRadiation[i] + 0.3);
+          triggerDiscovery('acid_reaction');
+          spawnParticles(nc * CELL + 4, nr * CELL + 4, 'spark', '#b4ff00', 5);
+        }
+      }
+    }
+  }
+  // Flow down
+  if (r + 1 < ROWS && cellType[idx(c, r+1)] === TYPE.EMPTY) {
+    swap(c, r, c, r + 1);
+  }
+}
+
+function processCreature(c, r, i) {
+  cellAge[i]++;
+  // Absorb radiation = mutate
+  if (cellRadiation[i] > 0.5 || Math.random() < 0.001) {
+    if (Math.random() < 0.1) {
+      cellType[i] = TYPE.MUTANT;
+      cellAge[i] = 0;
+      triggerDiscovery('mutation');
+      spawnParticles(c * CELL + 4, r * CELL + 4, 'glow', '#00ff88', 10);
+      addLog('Creature mutated due to radiation!', 'warn');
+      return;
+    }
+  }
+  // Random walk
+  if (cellAge[i] % 5 === 0) {
+    const dirs = [[0,1],[0,-1],[-1,0],[1,0]];
+    const [dc, dr] = dirs[Math.floor(Math.random() * 4)];
+    const nc = c + dc, nr = r + dr;
+    if (inBounds(nc, nr) && cellType[idx(nc, nr)] === TYPE.EMPTY) {
+      swap(c, r, nc, nr);
+    }
+  }
+  // Die at extreme heat
+  if (cellEnergy[i] > 5) {
+    cellType[i] = TYPE.SMOKE;
+    cellAge[i] = 0;
+  }
+}
+
+function processMutant(c, r, i) {
+  cellAge[i]++;
+  // Mutants move faster and are more resilient
+  if (cellAge[i] % 3 === 0) {
+    const dirs = [[0,1],[0,-1],[-1,0],[1,0]];
+    const [dc, dr] = dirs[Math.floor(Math.random() * 4)];
+    const nc = c + dc, nr = r + dr;
+    if (inBounds(nc, nr)) {
+      const ni = idx(nc, nr);
+      if (cellType[ni] === TYPE.EMPTY || cellType[ni] === TYPE.FALLOUT) {
+        swap(c, r, nc, nr);
+      }
+    }
+  }
+  // Spread radiation
+  cellRadiation[i] = Math.min(0.8, cellRadiation[i] + 0.01);
+  spawnParticles(c * CELL + 4, r * CELL + 4, 'radiation', '#00ff88', 0.3);
+}
+
+function processAntimatter(c, r, i) {
+  // Annihilate on contact
+  for (let [dc, dr] of DIRS4) {
+    const nc = c + dc, nr = r + dr;
+    if (!inBounds(nc, nr)) continue;
+    const ni = idx(nc, nr);
+    if (cellType[ni] !== TYPE.EMPTY && cellType[ni] !== TYPE.ANTIMATTER) {
+      // Annihilation!
+      removeCell(ni);
+      removeCell(i);
+      triggerDiscovery('antimatter_annihilation');
+      spawnExplosion(c * CELL + 4, r * CELL + 4, 3.0, '#ffffff');
+      heatWave(c, r, 10, 6);
+      shakeScreen(15);
+      globalRadiation += 1;
+      score += 100;
+      return;
+    }
+  }
+  spawnParticles(c * CELL + 4, r * CELL + 4, 'glow', '#ff0000', 0.5);
+}
+
+function processBlackhole(c, r, i) {
+  cellAge[i]++;
+  triggerDiscovery('black_hole_creation');
+
+  // Pull in surrounding cells
+  const radius = 3 + Math.floor(cellAge[i] / 50);
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      if (dc === 0 && dr === 0) continue;
+      const dist = Math.sqrt(dc*dc + dr*dr);
+      if (dist > radius) continue;
+      const nc = c + dc, nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const ni = idx(nc, nr);
+      if (cellType[ni] !== TYPE.EMPTY && cellType[ni] !== TYPE.BLACKHOLE && Math.random() < 0.1 / dist) {
+        removeCell(ni);
+        spawnParticles(nc * CELL + 4, nr * CELL + 4, 'spark', '#9900ff', 3);
+        globalRadiation += 0.01; // Hawking radiation
+      }
+    }
+  }
+
+  // Grow if eating
+  if (cellAge[i] > 500) {
+    // Evaporate
+    removeCell(i);
+    spawnExplosion(c * CELL + 4, r * CELL + 4, 2.0, '#9900ff');
+  }
+}
+
+function processDarkmatter(c, r, i) {
+  cellAge[i]++;
+  // Random quantum effects
+  if (Math.random() < 0.01) {
+    const nc = Math.floor(Math.random() * COLS);
+    const nr = Math.floor(Math.random() * ROWS);
+    const ni = idx(nc, nr);
+    if (cellType[ni] === TYPE.EMPTY) {
+      setCell(nc, nr, TYPE.DARKMATTER, 1, 0.5, 0);
+      removeCell(i);
+    }
+  }
+  cellRadiation[i] = Math.min(1, cellRadiation[i] + 0.005);
+  spawnParticles(c * CELL + 4, r * CELL + 4, 'radiation', '#aa00dd', 0.5);
+}
+
+function processFissionProduct(c, r, i) {
+  cellAge[i]++;
+  cellEnergy[i] = Math.max(0, cellEnergy[i] - 0.05);
+  cellRadiation[i] = Math.max(0, cellRadiation[i] - 0.002);
+  if (cellAge[i] > 100 && cellEnergy[i] < 0.1) {
+    cellType[i] = TYPE.FALLOUT;
+    cellAge[i] = 0;
+  }
+  if (Math.random() < 0.1) {
+    spawnParticles(c * CELL + 4, r * CELL + 4, 'radiation', '#ffcc00', 0.5);
+  }
+}
+
+function processFallout(c, r, i) {
+  cellAge[i]++;
+  cellRadiation[i] = Math.max(0, cellRadiation[i] - 0.001);
+  // Fallout drifts with wind
+  if (weatherType === 'WIND' && Math.random() < 0.05) {
+    const nc = c + (Math.random() < 0.7 ? 1 : -1);
+    if (inBounds(nc, r) && cellType[idx(nc, r)] === TYPE.EMPTY) {
+      swap(c, r, nc, r);
+    }
+  }
+  if (cellAge[i] > 500) removeCell(i);
+}
+
+function processSmoke(c, r, i) {
+  // Rises
+  if (r - 1 >= 0 && cellType[idx(c, r-1)] === TYPE.EMPTY) {
+    if (Math.random() < 0.3) swap(c, r, c, r - 1);
+  }
+  cellAge[i]++;
+  if (cellAge[i] > 80) removeCell(i);
+}
+
+function processSteam(c, r, i) {
+  // Rises faster
+  if (r - 1 >= 0 && cellType[idx(c, r-1)] === TYPE.EMPTY) {
+    swap(c, r, c, r - 1);
+    return;
+  }
+  cellAge[i]++;
+  if (cellAge[i] > 100) removeCell(i);
+}
+
+function processLava(c, r, i) {
+  cellEnergy[i] = Math.max(0, cellEnergy[i] - 0.02);
+  heatWave(c, r, 0.5, 2);
+  // Lava solidifies when cool
+  if (cellEnergy[i] < 0.1) {
+    cellType[i] = TYPE.METAL;
+    cellAge[i] = 0;
+  }
+  // Lava flows down
+  if (r + 1 < ROWS && cellType[idx(c, r+1)] === TYPE.EMPTY) {
+    if (Math.random() < 0.3) swap(c, r, c, r + 1);
+  }
+  if (Math.random() < 0.1) {
+    spawnParticles(c * CELL + 4, r * CELL + 4, 'spark', '#ff4400', 1);
+  }
+}
+
+function processGraphite(c, r, i) {
+  // Slow neutrons, catch fire at high energy
+  if (cellEnergy[i] > 6) {
+    cellType[i] = TYPE.FIRE;
+    cellAge[i] = 0;
+    triggerDiscovery('graphite_fire');
+  }
+}
+
+function processMetal(c, r, i) {
+  cellEnergy[i] = Math.max(0, cellEnergy[i] - 0.01);
+  if (cellEnergy[i] > 10) {
+    cellType[i] = TYPE.LAVA;
+    cellAge[i] = 0;
+    spawnParticles(c * CELL + 4, r * CELL + 4, 'spark', '#ff8800', 5);
+  }
+}
+
+function spreadHeatRad() {
+  // Spread energy/radiation to neighbors
+  for (let r = 1; r < ROWS - 1; r++) {
+    for (let c = 1; c < COLS - 1; c++) {
+      const i = idx(c, r);
+      if (cellEnergy[i] <= 0 && cellRadiation[i] <= 0) continue;
+      for (let [dc, dr] of DIRS4) {
+        const ni = idx(c + dc, r + dr);
+        if (cellEnergy[i] > 0.1) {
+          cellEnergy[ni] = Math.min(15, cellEnergy[ni] + cellEnergy[i] * 0.05);
+        }
+        if (cellRadiation[i] > 0.05) {
+          cellRadiation[ni] = Math.min(1, cellRadiation[ni] + cellRadiation[i] * 0.03);
+          globalRadiation += cellRadiation[i] * 0.001;
+        }
+      }
+      // Decay
+      cellEnergy[i] *= 0.97;
+      cellRadiation[i] *= 0.995;
+    }
+  }
+}
+
+function heatWave(c, r, energy, radius) {
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      const dist = Math.sqrt(dc*dc + dr*dr);
+      if (dist > radius) continue;
+      const nc = c + dc, nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const ni = idx(nc, nr);
+      const falloff = 1 / (1 + dist);
+      cellEnergy[ni] = Math.min(15, cellEnergy[ni] + energy * falloff);
+    }
+  }
+}
+
+function setCell(c, r, type, energy, rad, flags) {
+  const i = idx(c, r);
+  cellType[i] = type;
+  cellEnergy[i] = energy || 0;
+  cellRadiation[i] = rad || 0;
+  cellAge[i] = 0;
+  cellFlags[i] = flags || 0;
+  cellMoved[i] = 1;
+}
+
+function removeCell(i) {
+  cellType[i] = TYPE.EMPTY;
+  cellEnergy[i] = 0;
+  cellRadiation[i] = 0;
+  cellAge[i] = 0;
+  cellFlags[i] = 0;
+}
+
+function swap(c1, r1, c2, r2) {
+  const i1 = idx(c1, r1), i2 = idx(c2, r2);
+  let tmp;
+  tmp = cellType[i1]; cellType[i1] = cellType[i2]; cellType[i2] = tmp;
+  tmp = cellEnergy[i1]; cellEnergy[i1] = cellEnergy[i2]; cellEnergy[i2] = tmp;
+  tmp = cellRadiation[i1]; cellRadiation[i1] = cellRadiation[i2]; cellRadiation[i2] = tmp;
+  tmp = cellAge[i1]; cellAge[i1] = cellAge[i2]; cellAge[i2] = tmp;
+  tmp = cellFlags[i1]; cellFlags[i1] = cellFlags[i2]; cellFlags[i2] = tmp;
+  cellMoved[i1] = 1; cellMoved[i2] = 1;
+}
+
+function randomEvent() {
+  const events = [
+    () => { if (Math.random() < 0.3) { addLog('Solar flare detected! Radiation spike!', 'danger'); globalRadiation += 0.3; } },
+    () => { if (Math.random() < 0.2 && gameTime > 10000) spawnRandomCreature(); },
+    () => { if (Math.random() < 0.1) { addLog('Seismic activity detected!', 'warn'); shakeScreen(8); } },
+    () => { if (Math.random() < 0.15 && globalRadiation > 0.3) { addLog('Radioactive rain beginning!', 'warn'); spawnFallout(); triggerDiscovery('nuclear_winter'); } },
+    () => { if (powerOutput > 1000) { triggerDiscovery('power_record'); addLog(`POWER RECORD: ${Math.floor(powerOutput)} MW!`, 'discover'); } },
+  ];
+  events[Math.floor(Math.random() * events.length)]();
+}
+
+function spawnRandomCreature() {
+  const c = Math.floor(Math.random() * COLS);
+  const r = ROWS - 1;
+  if (inBounds(c, r) && cellType[idx(c, r)] === TYPE.EMPTY) {
+    setCell(c, r, TYPE.CREATURE, 0, 0, 0);
+  }
+}
+
+function spawnFallout() {
+  for (let c = 0; c < COLS; c++) {
+    if (Math.random() < 0.1 && cellType[idx(c, 0)] === TYPE.EMPTY) {
+      setCell(c, 0, TYPE.FALLOUT, 0, 0.5, 0);
+    }
+  }
+}
+
+// ============================================================
+//  RENDERING
+// ============================================================
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#030810';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw cells
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const i = idx(c, r);
+      const type = cellType[i];
+      if (type === TYPE.EMPTY) continue;
+
+      const x = c * CELL, y = r * CELL;
+      const en = cellEnergy[i];
+      const rad = cellRadiation[i];
+
+      // Get base color
+      let color = CELL_COLORS[type] ? CELL_COLORS[type]() : '#888';
+
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, CELL, CELL);
+
+      // Glow for radioactive/energetic cells
+      if (en > 1 || rad > 0.3) {
+        const glow = Math.min(1, (en + rad) / 5);
+        ctx.save();
+        ctx.globalAlpha = glow * 0.4;
+        let glowColor = type === TYPE.URANIUM ? '#00ff64' :
+                        type === TYPE.PLUTONIUM ? '#00c8ff' :
+                        type === TYPE.PLASMA ? '#ff00cc' :
+                        type === TYPE.FIRE ? '#ff6600' :
+                        type === TYPE.LAVA ? '#ff3300' :
+                        type === TYPE.BLACKHOLE ? '#9900ff' : '#ffff00';
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = CELL * glow * 3;
+        ctx.fillStyle = glowColor;
+        ctx.fillRect(x, y, CELL, CELL);
+        ctx.restore();
+      }
+
+      // Radiation overlay
+      if (rad > 0.2) {
+        ctx.save();
+        ctx.globalAlpha = rad * 0.3;
+        ctx.fillStyle = '#00ff88';
+        ctx.fillRect(x, y, CELL, CELL);
+        ctx.restore();
+      }
+
+      // Special rendering for neutrons - draw as moving dot
+      if (type === TYPE.NEUTRON) {
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#c8c8ff';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(x + CELL/2, y + CELL/2, CELL/3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Creature sprite
+      if (type === TYPE.CREATURE || type === TYPE.MUTANT) {
+        ctx.save();
+        ctx.fillStyle = type === TYPE.MUTANT ? '#00ff50' : '#00c832';
+        ctx.font = `${CELL}px serif`;
+        ctx.fillText(type === TYPE.MUTANT ? '☣' : '●', x, y + CELL);
+        ctx.restore();
+      }
+    }
+  }
+}
+
+function renderParticles() {
+  pCtx.clearRect(0, 0, W, H);
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update(slowMo ? 0.3 : 1);
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+    p.draw(pCtx);
+  }
+}
+
+function spawnParticles(x, y, type, color, count) {
+  for (let i = 0; i < count; i++) {
+    let vx, vy, life, size;
+    if (type === 'fire') {
+      vx = (Math.random() - 0.5) * 3;
+      vy = -Math.random() * 4 - 1;
+      life = 20 + Math.random() * 20;
+      size = 1 + Math.random() * 2;
+    } else if (type === 'spark') {
+      vx = (Math.random() - 0.5) * 8;
+      vy = (Math.random() - 0.5) * 8;
+      life = 15 + Math.random() * 15;
+      size = 1;
+    } else if (type === 'glow') {
+      vx = (Math.random() - 0.5) * 3;
+      vy = (Math.random() - 0.5) * 3;
+      life = 20 + Math.random() * 20;
+      size = 2 + Math.random() * 3;
+    } else if (type === 'smoke') {
+      vx = (Math.random() - 0.5) * 1;
+      vy = -Math.random() * 1 - 0.5;
+      life = 40 + Math.random() * 40;
+      size = 3 + Math.random() * 4;
+    } else if (type === 'radiation') {
+      vx = (Math.random() - 0.5) * 4;
+      vy = (Math.random() - 0.5) * 4;
+      life = 10 + Math.random() * 15;
+      size = 0.5 + Math.random();
+    } else {
+      vx = (Math.random() - 0.5) * 5;
+      vy = (Math.random() - 0.5) * 5;
+      life = 20;
+      size = 2;
+    }
+    if (Math.random() < (count < 1 ? count : 1)) {
+      particles.push(new Particle(
+        x + (Math.random() - 0.5) * CELL,
+        y + (Math.random() - 0.5) * CELL,
+        vx, vy, color, life, size,
+        type === 'smoke' ? 'smoke' : type === 'glow' ? 'glow' : 'dot'
+      ));
+    }
+  }
+}
+
+function spawnExplosion(x, y, scale, color) {
+  const count = Math.floor(20 * scale);
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const speed = (2 + Math.random() * 4) * scale;
+    particles.push(new Particle(
+      x, y,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed,
+      color, 30 + Math.random() * 20, 1.5 + Math.random() * 2, 'glow'
+    ));
+  }
+  // Smoke
+  for (let i = 0; i < count / 2; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 2 * scale;
+    particles.push(new Particle(
+      x, y,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed - 1,
+      'rgba(50,50,50,0.8)', 60, 4 + Math.random() * 4, 'smoke'
+    ));
+  }
+  shakeScreen(scale * 8);
+}
+
+// Screen shake
+let shakeX = 0, shakeY = 0, shakeMag = 0;
+function shakeScreen(magnitude) {
+  shakeMag = Math.max(shakeMag, magnitude);
+  document.getElementById('main-canvas').style.transform = `translate(${(Math.random()-0.5)*shakeMag}px, ${(Math.random()-0.5)*shakeMag}px)`;
+  document.getElementById('particle-canvas').style.transform = document.getElementById('main-canvas').style.transform;
+  setTimeout(() => {
+    document.getElementById('main-canvas').style.transform = '';
+    document.getElementById('particle-canvas').style.transform = '';
+    shakeMag = 0;
+  }, 150);
+
+  // Flash
+  if (magnitude > 10) {
+    const flash = document.getElementById('explosion-flash');
+    flash.style.opacity = Math.min(0.8, magnitude / 20);
+    setTimeout(() => flash.style.opacity = 0, 100);
+  }
+}
+
+// ============================================================
+//  HUD UPDATE
+// ============================================================
+let hudUpdateTimer = 0;
+function updateHUD() {
+  hudUpdateTimer++;
+  if (hudUpdateTimer % 6 !== 0) return;
+
+  // Count stats
+  let cellCount = 0, totalRad = 0, totalEnergy = 0;
+  for (let i = 0; i < COLS * ROWS; i++) {
+    if (cellType[i] !== TYPE.EMPTY) { cellCount++; totalRad += cellRadiation[i]; totalEnergy += cellEnergy[i]; }
+  }
+  globalTemp = 20 + totalEnergy * 0.5;
+  const radSv = globalRadiation;
+
+  document.getElementById('val-rad').textContent = radSv > 1 ? (radSv).toFixed(1) + ' Sv' : (radSv * 1000).toFixed(0) + ' mSv';
+  document.getElementById('val-temp').textContent = Math.floor(globalTemp) + '°C';
+  document.getElementById('val-power').textContent = Math.floor(powerOutput) + ' MW';
+  document.getElementById('val-reactions').textContent = totalReactions;
+  document.getElementById('val-score').textContent = score;
+  document.getElementById('val-disc').textContent = `${discoveries.size}/20`;
+
+  // Danger indicators
+  const radChip = document.getElementById('stat-rad');
+  radChip.className = 'stat-chip' + (radSv > 1 ? ' danger' : radSv > 0.3 ? ' warn' : ' safe');
+
+  const tempChip = document.getElementById('stat-temp');
+  tempChip.className = 'stat-chip' + (globalTemp > 500 ? ' danger' : globalTemp > 100 ? ' warn' : '');
+
+  // Meters
+  document.getElementById('meter-alpha').style.width = Math.min(100, globalRadiation * 30) + '%';
+  document.getElementById('meter-beta').style.width = Math.min(100, totalRad * 5) + '%';
+  document.getElementById('meter-gamma').style.width = Math.min(100, chainIntensity * 2) + '%';
+  document.getElementById('meter-temp').style.width = Math.min(100, (globalTemp - 20) / 10) + '%';
+  document.getElementById('meter-pressure').style.width = Math.min(100, chainIntensity) + '%';
+  document.getElementById('meter-power').style.width = Math.min(100, powerOutput / 20) + '%';
+
+  // Sim info
+  document.getElementById('sim-time').textContent = Math.floor(gameTime / 1000) + 's';
+  document.getElementById('sim-tick').textContent = tickCount;
+  document.getElementById('sim-cells').textContent = cellCount;
+  document.getElementById('sim-chain').textContent = chainReaction ? '⚠ CRITICAL' : 'STABLE';
+  document.getElementById('sim-chain').style.color = chainReaction ? 'var(--neon-red)' : 'var(--neon-green)';
+
+  // Radiation vignette
+  const vignette = document.getElementById('radiation-vignette');
+  vignette.style.opacity = Math.min(0.8, globalRadiation * 0.5);
+
+  // Discovery count
+  document.getElementById('unlock-fill').style.width = (discoveries.size / 20 * 100) + '%';
+
+  // Unlock dark matter at 10 discoveries
+  const dmBtn = document.getElementById('btn-darkmatter');
+  if (discoveries.size >= 10) {
+    dmBtn.classList.remove('el-locked');
+    dmBtn.querySelector('.el-name').textContent = 'DARK MAT';
+    dmBtn.querySelector('.el-symbol').textContent = '?';
+    dmBtn.dataset.desc = 'Exotic matter with unknown quantum properties. Teleports randomly.';
+  }
+}
+
+// ============================================================
+//  MOUSE INPUT
+// ============================================================
+function getCanvasPos(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    c: Math.floor((clientX - rect.left) / CELL),
+    r: Math.floor((clientY - rect.top) / CELL)
+  };
+}
+
+function onMouseDown(e) {
+  if (!gameRunning) return;
+  mouseDown = true;
+  const pos = getCanvasPos(e.clientX, e.clientY);
+  mouseX = pos.c; mouseY = pos.r;
+  lastMouseX = pos.c; lastMouseY = pos.r;
+  toolStart = { c: pos.c, r: pos.r };
+
+  if (currentTool === 'bomb') {
+    spawnBomb(pos.c, pos.r);
+    return;
+  }
+  if (currentTool === 'nuke') {
+    spawnNuke(pos.c, pos.r);
+    return;
+  }
+  if (currentTool === 'pick') {
+    inspectCell(pos.c, pos.r);
+    return;
+  }
+  if (currentTool === 'draw' || currentTool === 'spray') {
+    applyBrush(pos.c, pos.r, e.button === 2);
+  }
+}
+
+function onMouseMove(e) {
+  if (!gameRunning) return;
+  const pos = getCanvasPos(e.clientX, e.clientY);
+  mouseX = pos.c; mouseY = pos.r;
+
+  if (!mouseDown) return;
+
+  if (currentTool === 'draw') {
+    // Interpolate for smooth strokes
+    const steps = Math.max(1, Math.floor(Math.hypot(pos.c - lastMouseX, pos.r - lastMouseY)));
+    for (let s = 0; s <= steps; s++) {
+      const t = steps > 0 ? s / steps : 0;
+      const ic = Math.round(lastMouseX + (pos.c - lastMouseX) * t);
+      const ir = Math.round(lastMouseY + (pos.r - lastMouseY) * t);
+      applyBrush(ic, ir, false);
+    }
+  } else if (currentTool === 'spray') {
+    applyBrush(pos.c, pos.r, false);
+  }
+
+  lastMouseX = pos.c; lastMouseY = pos.r;
+}
+
+function onMouseUp(e) {
+  if (!mouseDown) return;
+  mouseDown = false;
+
+  if (!gameRunning || !toolStart) return;
+  const pos = { c: mouseX, r: mouseY };
+
+  if (currentTool === 'line') drawLine(toolStart.c, toolStart.r, pos.c, pos.r);
+  else if (currentTool === 'rect') drawRect(toolStart.c, toolStart.r, pos.c, pos.r);
+  else if (currentTool === 'circle') drawCircle(toolStart.c, toolStart.r, pos.c, pos.r);
+
+  toolStart = null;
+}
+
+function applyBrush(c, r, erase) {
+  const type = erase ? null : EL_TO_TYPE[selectedEl];
+  if (type === undefined) return;
+
+  for (let dr = -brushSize; dr <= brushSize; dr++) {
+    for (let dc = -brushSize; dc <= brushSize; dc++) {
+      if (dc*dc + dr*dr > brushSize*brushSize) continue;
+      if (Math.random() > brushDensity / 10) continue;
+      const nc = c + dc, nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const ni = idx(nc, nr);
+      if (erase || type === -1) {
+        removeCell(ni);
+      } else {
+        if (cellType[ni] === TYPE.EMPTY || type === TYPE.NEUTRON || type === TYPE.FIRE || type === TYPE.GAS) {
+          const energy = type === TYPE.FIRE ? 1 + brushEnergy * 0.2 :
+                         type === TYPE.PLASMA ? 5 + brushEnergy * 0.5 :
+                         type === TYPE.NEUTRON ? brushEnergy * 0.2 : 0;
+          const rad = (type === TYPE.URANIUM || type === TYPE.PLUTONIUM) ? 0.1 : 0;
+          setCell(nc, nr, type, energy, rad,
+            type === TYPE.NEUTRON ? Math.floor(Math.random() * 256) : 0);
+        }
+      }
+    }
+  }
+}
+
+function drawLine(c1, r1, c2, r2) {
+  const steps = Math.max(Math.abs(c2-c1), Math.abs(r2-r1));
+  for (let s = 0; s <= steps; s++) {
+    const t = steps > 0 ? s / steps : 0;
+    const c = Math.round(c1 + (c2-c1) * t);
+    const r = Math.round(r1 + (r2-r1) * t);
+    applyBrush(c, r, false);
+  }
+}
+
+function drawRect(c1, r1, c2, r2) {
+  const minC = Math.min(c1,c2), maxC = Math.max(c1,c2);
+  const minR = Math.min(r1,r2), maxR = Math.max(r1,r2);
+  for (let c = minC; c <= maxC; c++) { applyBrush(c, minR, false); applyBrush(c, maxR, false); }
+  for (let r = minR; r <= maxR; r++) { applyBrush(minC, r, false); applyBrush(maxC, r, false); }
+}
+
+function drawCircle(c1, r1, c2, r2) {
+  const rad = Math.floor(Math.hypot(c2-c1, r2-r1));
+  for (let r = -rad; r <= rad; r++) {
+    for (let c = -rad; c <= rad; c++) {
+      if (Math.abs(Math.sqrt(c*c + r*r) - rad) < 1.5) {
+        applyBrush(c1 + c, r1 + r, false);
+      }
+    }
+  }
+}
+
+function spawnBomb(c, r) {
+  spawnExplosion(c * CELL + 4, r * CELL + 4, 1.5, '#ffaa00');
+  heatWave(c, r, 5, 6);
+  for (let dr = -4; dr <= 4; dr++) {
+    for (let dc = -4; dc <= 4; dc++) {
+      if (dc*dc + dr*dr > 16) continue;
+      const nc = c + dc, nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const ni = idx(nc, nr);
+      if (cellType[ni] !== TYPE.EMPTY) removeCell(ni);
+    }
+  }
+  shakeScreen(12);
+  addLog('💥 EXPLOSION at ' + c + ',' + r, 'danger');
+}
+
+function spawnNuke(c, r) {
+  const radius = 12;
+  spawnExplosion(c * CELL + 4, r * CELL + 4, 4, '#ffffff');
+  heatWave(c, r, 15, radius);
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      if (dc*dc + dr*dr > radius*radius) continue;
+      const nc = c + dc, nr = r + dr;
+      if (!inBounds(nc, nr)) continue;
+      const ni = idx(nc, nr);
+      if (Math.random() < 0.7) removeCell(ni);
+      else { cellType[ni] = TYPE.FALLOUT; cellRadiation[ni] = 1; cellAge[ni] = 0; }
+    }
+  }
+  shakeScreen(25);
+  globalRadiation += 2;
+  score += 200;
+  addLog('☢ NUCLEAR DETONATION! FALLOUT SPREADING!', 'danger');
+  triggerDiscovery('meltdown');
+}
+
+function inspectCell(c, r) {
+  if (!inBounds(c, r)) return;
+  const i = idx(c, r);
+  const type = cellType[i];
+  const typeName = Object.keys(TYPE).find(k => TYPE[k] === type) || 'UNKNOWN';
+  addLog(`[INSPECT] ${typeName} | E:${cellEnergy[i].toFixed(2)} R:${cellRadiation[i].toFixed(2)} AGE:${cellAge[i]}`, 'info');
+}
+
+// ============================================================
+//  KEYBOARD
+// ============================================================
+function onKeyDown(e) {
+  switch(e.key) {
+    case 'p': case 'P': case 'Escape': togglePause(); break;
+    case '1': setTool('draw', document.getElementById('tool-draw')); break;
+    case '2': setTool('line', document.getElementById('tool-line')); break;
+    case '3': setTool('rect', document.getElementById('tool-rect')); break;
+    case '4': setTool('circle', document.getElementById('tool-circle')); break;
+    case '5': setTool('spray', document.getElementById('tool-spray')); break;
+    case '6': setTool('bomb', document.getElementById('tool-bomb')); break;
+    case '7': setTool('nuke', document.getElementById('tool-nuke')); break;
+    case 'i': case 'I': setTool('pick', document.getElementById('tool-pick')); break;
+    case 's': if (e.ctrlKey) { e.preventDefault(); saveGame(); } break;
+  }
+}
+
+// ============================================================
+//  UI FUNCTIONS
+// ============================================================
+function selectElement(btn) {
+  if (btn.classList.contains('el-locked')) return;
+  document.querySelectorAll('.element-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedEl = btn.dataset.el;
+}
+
+function setTool(tool, btn) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function updateBrush() {
+  brushSize = parseInt(document.getElementById('brush-size').value);
+  brushDensity = parseInt(document.getElementById('brush-density').value);
+  brushEnergy = parseInt(document.getElementById('brush-energy').value);
+  document.getElementById('brush-size-val').textContent = brushSize;
+  document.getElementById('brush-density-val').textContent = brushDensity;
+  document.getElementById('brush-energy-val').textContent = brushEnergy;
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pause-overlay').classList.toggle('hidden', !paused);
+  document.getElementById('btn-pause').textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+}
+
+function toggleSlow() {
+  slowMo = !slowMo;
+  document.getElementById('btn-slow').classList.toggle('active', slowMo);
+  addLog(slowMo ? '🐢 Slow-motion mode ON' : 'Normal speed resumed', 'info');
+}
+
+function clearSandbox() {
+  initArrays();
+  particles = [];
+  globalRadiation = 0;
+  powerOutput = 0;
+  chainIntensity = 0;
+  totalReactions = 0;
+  addLog('Sandbox cleared.', 'info');
+}
+
+function showMenu() {
+  paused = true;
+  document.getElementById('menu-overlay').classList.remove('hidden');
+}
+
+function startGame() {
+  document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('pause-overlay').classList.add('hidden');
+  gameRunning = true;
+  paused = false;
+  addLog('⚛ Reactor Zero initialized. Experiment freely.', 'discover');
+  addLog('Select an element and paint on the canvas.', 'info');
+  addLog('Try placing Uranium next to Neutrons!', 'info');
+}
+
+// ============================================================
+//  DISCOVERIES & ACHIEVEMENTS
+// ============================================================
+let pendingDiscoveries = [];
+let showingDiscovery = false;
+
+function triggerDiscovery(key) {
+  if (discoveries.has(key)) return;
+  if (!discoveryDefs[key]) return;
+  discoveries.add(key);
+  pendingDiscoveries.push(key);
+  if (!showingDiscovery) showNextDiscovery();
+
+  // Update discovery list
+  updateDiscoveryList();
+  score += 100;
+  addLog(`🧪 DISCOVERY: ${discoveryDefs[key].name}!`, 'discover');
+}
+
+function showNextDiscovery() {
+  if (pendingDiscoveries.length === 0) { showingDiscovery = false; return; }
+  showingDiscovery = true;
+  const key = pendingDiscoveries.shift();
+  const def = discoveryDefs[key];
+  document.getElementById('disc-name').textContent = def.icon + ' ' + def.name;
+  document.getElementById('disc-desc').textContent = def.desc;
+  document.getElementById('discovery-popup').classList.add('show');
+}
+
+function closeDiscovery() {
+  document.getElementById('discovery-popup').classList.remove('show');
+  setTimeout(showNextDiscovery, 300);
+}
+
+function updateDiscoveryList() {
+  const list = document.getElementById('discovery-list');
+  if (discoveries.size === 0) { list.textContent = 'Experiment to unlock...'; return; }
+  list.innerHTML = '';
+  for (const key of discoveries) {
+    const def = discoveryDefs[key];
+    if (!def) continue;
+    const div = document.createElement('div');
+    div.style.cssText = 'color:#00ff88; display:flex; gap:4px; align-items:center;';
+    div.innerHTML = `<span>${def.icon}</span><span>${def.name}</span>`;
+    list.appendChild(div);
+  }
+}
+
+function checkAchievements() {
+  for (const [key, def] of Object.entries(achievementDefs)) {
+    if (!achievements.has(key) && def.cond()) {
+      achievements.add(key);
+      showAchievement(def);
+      updateAchievementList();
+    }
+  }
+}
+
+let achQueue = [];
+let showingAch = false;
+function showAchievement(def) {
+  achQueue.push(def);
+  if (!showingAch) processAchQueue();
+}
+
+function processAchQueue() {
+  if (achQueue.length === 0) { showingAch = false; return; }
+  showingAch = true;
+  const def = achQueue.shift();
+  document.getElementById('ach-icon').textContent = def.icon;
+  document.getElementById('ach-name').textContent = def.name;
+  const popup = document.getElementById('achievement-popup');
+  popup.classList.add('show');
+  setTimeout(() => {
+    popup.classList.remove('show');
+    setTimeout(processAchQueue, 400);
+  }, 3000);
+}
+
+function updateAchievementList() {
+  const list = document.getElementById('ach-list');
+  if (achievements.size === 0) { list.textContent = 'None yet...'; return; }
+  list.innerHTML = '';
+  for (const key of achievements) {
+    const def = achievementDefs[key];
+    if (!def) continue;
+    const div = document.createElement('div');
+    div.style.cssText = 'color:#ffee00; display:flex; gap:4px;';
+    div.innerHTML = `<span>${def.icon}</span><span>${def.name}</span>`;
+    list.appendChild(div);
+  }
+}
+
+// ============================================================
+//  EVENT LOG
+// ============================================================
+const LOG_MAX = 80;
+function addLog(msg, type) {
+  const log = document.getElementById('event-log');
+  const div = document.createElement('div');
+  div.className = `log-entry log-${type || 'normal'}`;
+  const t = Math.floor(gameTime / 1000);
+  div.textContent = `[${t}s] ${msg}`;
+  log.insertBefore(div, log.firstChild);
+  while (log.children.length > LOG_MAX) log.removeChild(log.lastChild);
+}
+
+// ============================================================
+//  SAVE/LOAD
+// ============================================================
+function saveGame() {
+  try {
+    const save = {
+      cells: Array.from(cellType),
+      energy: Array.from(cellEnergy),
+      radiation: Array.from(cellRadiation),
+      age: Array.from(cellAge),
+      discoveries: Array.from(discoveries),
+      achievements: Array.from(achievements),
+      score, totalReactions, tickCount, gameTime,
+      COLS, ROWS
+    };
+    localStorage.setItem('reactor_zero_save', JSON.stringify(save));
+    addLog('💾 Game saved successfully.', 'info');
+  } catch(e) {
+    addLog('❌ Save failed: ' + e.message, 'warn');
+  }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('reactor_zero_save');
+    if (!raw) { addLog('No save found.', 'warn'); return; }
+    const save = JSON.parse(raw);
+    if (save.COLS !== COLS || save.ROWS !== ROWS) {
+      addLog('⚠ Save resolution mismatch - clearing.', 'warn');
+      return;
+    }
+    cellType.set(save.cells);
+    cellEnergy.set(save.energy);
+    cellRadiation.set(save.radiation);
+    cellAge.set(save.age);
+    discoveries = new Set(save.discoveries);
+    achievements = new Set(save.achievements);
+    score = save.score || 0;
+    totalReactions = save.totalReactions || 0;
+    tickCount = save.tickCount || 0;
+    gameTime = save.gameTime || 0;
+    updateDiscoveryList();
+    updateAchievementList();
+    addLog('↩ Game loaded!', 'discover');
+    document.getElementById('menu-overlay').classList.add('hidden');
+    gameRunning = true;
+    paused = false;
+  } catch(e) {
+    addLog('❌ Load failed: ' + e.message, 'warn');
+  }
+}
+
+// ============================================================
+//  TOOLTIP
+// ============================================================
+function showTooltip(e) {
+  const el = e.currentTarget;
+  const tooltip = document.getElementById('tooltip');
+  document.getElementById('tt-name').textContent = el.dataset.name || '';
+  document.getElementById('tt-desc').textContent = el.dataset.desc || '';
+  document.getElementById('tt-stats').textContent = '';
+  tooltip.style.display = 'block';
+  moveTooltip(e);
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+function moveTooltip(e) {
+  const tooltip = document.getElementById('tooltip');
+  const x = e.clientX + 16, y = e.clientY - 10;
+  tooltip.style.left = Math.min(x, window.innerWidth - 220) + 'px';
+  tooltip.style.top = Math.min(y, window.innerHeight - 100) + 'px';
+}
+
+function showTutorial() {
+  document.getElementById('menu-overlay').classList.add('hidden');
+  gameRunning = true;
+  paused = false;
+  addLog('=== TUTORIAL ===', 'discover');
+  addLog('1. Select an element from the left panel', 'info');
+  addLog('2. Click/drag on the canvas to place it', 'info');
+  addLog('3. Uranium + Neutrons = Fission reaction', 'info');
+  addLog('4. Deuterium + Tritium = Fusion (needs energy)', 'info');
+  addLog('5. Water/Graphite slow neutrons (moderators)', 'info');
+  addLog('6. Lead blocks radiation spread', 'info');
+  addLog('7. Fire ignites Gas for explosions', 'info');
+  addLog('8. Ice cools everything rapidly', 'info');
+  addLog('9. Antimatter annihilates all matter!', 'warn');
+  addLog('10. Experiment to discover new reactions!', 'discover');
+}
+
+// ============================================================
+//  START
+// ============================================================
+initGame();
+lastTime = performance.now();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
